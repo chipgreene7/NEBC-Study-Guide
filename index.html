@@ -67,7 +67,10 @@ body.dark .topbar{background:rgba(15,23,42,.86)}
 
 .answer-gate{margin:12px 0;padding:12px;border:1px dashed var(--line);border-radius:12px;background:var(--panel)}
 .answer-choices{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.answer-choice{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:700}
+.answer-choice{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:700;transition:transform .08s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease}
+.answer-choice:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.answer-choice.selected{background:#dbeafe;color:#1d4ed8;border-color:#2e74b5;box-shadow:0 0 0 3px rgba(46,116,181,.20)}
+.answer-choice.selected::after{content:' ✓';font-weight:900}
 .answer-choice.correct{background:#e7f8ed;color:#0f6b2d;border-color:#a7e3ba}
 .answer-choice.wrong{background:#feeceb;color:#9b1c1c;border-color:#f5b5b0}
 .question-feedback{margin-top:10px;font-weight:700}
@@ -4380,8 +4383,22 @@ function prepareQuestionUI(q){
     btn.type='button';
     btn.className='answer-choice';
     btn.dataset.letter=letter;
+    btn.setAttribute('aria-pressed','false');
+    btn.setAttribute('aria-label','Answer choice '+letter);
     btn.textContent=letter;
-    btn.onclick=()=>{btn.classList.toggle('selected'); btn.classList.remove('wrong'); const fb=q.querySelector('.question-feedback'); if(fb && !q.classList.contains('mastered-question')){fb.textContent=''; fb.className='question-feedback';}};
+    btn.onclick=()=>{
+      if(!isMulti){
+        q.querySelectorAll('.answer-choice').forEach(other=>{other.classList.remove('selected','wrong'); other.setAttribute('aria-pressed','false');});
+        btn.classList.add('selected');
+        btn.setAttribute('aria-pressed','true');
+      } else {
+        btn.classList.toggle('selected');
+        btn.classList.remove('wrong');
+        btn.setAttribute('aria-pressed', btn.classList.contains('selected') ? 'true' : 'false');
+      }
+      const fb=q.querySelector('.question-feedback');
+      if(fb && !q.classList.contains('mastered-question')){fb.textContent=''; fb.className='question-feedback';}
+    };
     choiceBox.appendChild(btn);
   });
 
