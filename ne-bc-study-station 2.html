@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NE-BC Study Station</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c1a1b;
+    --petrol:#0e3a40;
+    --petrol-2:#16585f;
+    --teal:#1d7e88;
+    --paper:#e9eef0;
+    --paper-2:#dde4e6;
+    --card:#f6f8f8;
+    --coral:#e8654f;
+    --coral-deep:#c84a35;
+    --amber:#e0a64a;
+    --line:rgba(14,58,64,.14);
+    --line-soft:rgba(14,58,64,.08);
+    --good:#1d7e88;
+    --bad:#c84a35;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --disp:'Archivo',system-ui,sans-serif;
+    --body:'Newsreader',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:18px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 90px}
+
+  /* ---------- Telemetry header ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:var(--petrol);
+    color:#dff0f0;
+    border-bottom:2px solid var(--coral);
+  }
+  .hbar{
+    max-width:920px;margin:0 auto;padding:14px 20px;
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  }
+  .brand{display:flex;flex-direction:column;line-height:1.05}
+  .brand .kick{
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--coral);font-weight:500;
+  }
+  .brand .name{font-family:var(--disp);font-weight:800;font-size:21px;letter-spacing:-.01em;color:#fff}
+  .pulse-wrap{flex:1;min-width:120px;height:40px;position:relative;opacity:.9}
+  .pulse-wrap svg{width:100%;height:100%;display:block}
+  .pulse path{
+    fill:none;stroke:var(--coral);stroke-width:2;
+    stroke-dasharray:600;stroke-dashoffset:600;
+    animation:trace 3.2s linear infinite;
+  }
+  @keyframes trace{to{stroke-dashoffset:0}}
+  .vitals{display:flex;gap:18px}
+  .vital{font-family:var(--mono);text-align:right;line-height:1.1}
+  .vital b{display:block;font-size:19px;font-weight:600;color:#fff}
+  .vital span{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#7fb3b6}
+
+  /* ---------- Mode toggle ---------- */
+  .modes{display:flex;gap:0;background:var(--petrol-2);}
+  .modes .mwrap{max-width:920px;margin:0 auto;padding:0 20px;display:flex;gap:6px}
+  .modes button{
+    font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    background:transparent;border:none;color:#9fc6c8;cursor:pointer;
+    padding:12px 16px 11px;border-bottom:3px solid transparent;font-weight:500;transition:.15s;
+  }
+  .modes button:hover{color:#fff}
+  .modes button.on{color:#fff;border-bottom-color:var(--coral)}
+
+  /* ---------- Topic filter ---------- */
+  .filters{margin:22px 0 8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .filters .flabel{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--petrol-2);opacity:.75;margin-right:4px;
+  }
+  .chip{
+    font-family:var(--disp);font-weight:600;font-size:12.5px;
+    border:1px solid var(--line);background:var(--card);color:var(--petrol);
+    padding:6px 12px;border-radius:40px;cursor:pointer;transition:.14s;
+  }
+  .chip:hover{border-color:var(--teal);color:var(--teal)}
+  .chip.on{background:var(--petrol);color:#fff;border-color:var(--petrol)}
+
+  /* ---------- Flashcards ---------- */
+  .stage{margin-top:24px;display:flex;flex-direction:column;align-items:center}
+  .progressline{
+    width:100%;display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--petrol-2);
+    text-transform:uppercase;margin-bottom:14px;
+  }
+  .progressline .topiclabel{color:var(--coral-deep);font-weight:600}
+
+  .card{
+    width:100%;min-height:340px;perspective:1800px;cursor:pointer;
+  }
+  .card-inner{
+    position:relative;width:100%;min-height:340px;
+    transition:transform .55s cubic-bezier(.4,.05,.2,1);transform-style:preserve-3d;
+  }
+  .card.flipped .card-inner{transform:rotateY(180deg)}
+  .face{
+    position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    border-radius:14px;padding:40px 38px;display:flex;flex-direction:column;
+    border:1px solid var(--line);box-shadow:0 18px 40px -28px rgba(14,58,64,.55);
+  }
+  .face.front{background:var(--card)}
+  .face.back{background:var(--petrol);color:#eaf4f4;transform:rotateY(180deg)}
+  .face .corner{
+    font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .front .corner{color:var(--petrol-2);opacity:.7}
+  .back .corner{color:var(--coral);opacity:.95}
+  .face .term{
+    flex:1;display:flex;align-items:center;
+    font-family:var(--disp);font-weight:700;letter-spacing:-.015em;
+    font-size:clamp(24px,4.4vw,38px);line-height:1.12;
+  }
+  .back .term{font-family:var(--body);font-weight:400;font-size:clamp(18px,2.6vw,22px);line-height:1.5;display:block;padding-top:18px}
+  .back .term em{color:var(--amber);font-style:normal;font-weight:600}
+  .flaghint{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--petrol-2);opacity:.55;margin-top:8px;text-align:center}
+
+  .deck-nav{display:flex;gap:10px;margin-top:22px;width:100%;align-items:center}
+  .navbtn{
+    font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.02em;
+    border:1px solid var(--petrol);background:var(--card);color:var(--petrol);
+    padding:13px 22px;border-radius:9px;cursor:pointer;transition:.14s;flex:0 0 auto;
+  }
+  .navbtn:hover{background:var(--petrol);color:#fff}
+  .navbtn:disabled{opacity:.35;cursor:not-allowed}
+  .navbtn.primary{background:var(--coral);border-color:var(--coral);color:#fff;flex:1}
+  .navbtn.primary:hover{background:var(--coral-deep);border-color:var(--coral-deep)}
+  .navbtn.ghost{border-color:var(--line);color:var(--petrol-2)}
+  .navbtn.ghost:hover{background:var(--paper-2);color:var(--petrol)}
+
+  /* ---------- Practice questions ---------- */
+  .qcard{
+    width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:30px 34px 34px;box-shadow:0 18px 40px -30px rgba(14,58,64,.5);
+  }
+  .qmeta{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    display:flex;justify-content:space-between;color:var(--petrol-2);margin-bottom:18px;
+  }
+  .qmeta .qtopic{color:var(--coral-deep);font-weight:600}
+  .qtext{font-family:var(--disp);font-weight:600;font-size:clamp(20px,2.8vw,25px);line-height:1.3;letter-spacing:-.01em;margin-bottom:22px}
+  .opts{display:flex;flex-direction:column;gap:11px}
+  .opt{
+    text-align:left;font-family:var(--body);font-size:17px;line-height:1.4;
+    background:#fff;border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px 14px 50px;cursor:pointer;position:relative;transition:.13s;color:var(--ink);
+  }
+  .opt:hover:not(.locked){border-color:var(--teal);background:#f0f6f6}
+  .opt .ltr{
+    position:absolute;left:14px;top:50%;transform:translateY(-50%);
+    font-family:var(--mono);font-size:13px;font-weight:600;
+    width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;color:var(--petrol-2);transition:.13s;
+  }
+  .opt.locked{cursor:default}
+  .opt.correct{border-color:var(--good);background:#e4f1f0}
+  .opt.correct .ltr{background:var(--good);border-color:var(--good);color:#fff}
+  .opt.wrong{border-color:var(--bad);background:#faeae6}
+  .opt.wrong .ltr{background:var(--bad);border-color:var(--bad);color:#fff}
+  .opt.dim{opacity:.55}
+
+  .rationale{
+    margin-top:20px;border-left:3px solid var(--coral);background:#fff;
+    padding:16px 18px;border-radius:0 10px 10px 0;font-size:16.5px;line-height:1.5;
+    display:none;
+  }
+  .rationale.show{display:block}
+  .rationale .rh{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--coral-deep);font-weight:600;margin-bottom:6px;
+  }
+
+  /* ---------- Results / empty ---------- */
+  .panel{
+    width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:44px 38px;text-align:center;box-shadow:0 18px 40px -30px rgba(14,58,64,.5);
+  }
+  .panel .big{font-family:var(--mono);font-size:64px;font-weight:600;color:var(--petrol);line-height:1}
+  .panel .big small{font-size:26px;color:var(--coral-deep)}
+  .panel h2{font-family:var(--disp);font-weight:800;font-size:26px;margin:12px 0 6px;color:var(--petrol)}
+  .panel p{color:var(--petrol-2);max-width:46ch;margin:0 auto 22px}
+  .panel .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+  .foot{
+    text-align:center;margin-top:40px;font-family:var(--mono);
+    font-size:11px;letter-spacing:.1em;color:var(--petrol-2);opacity:.7;line-height:1.7;
+  }
+  .foot b{color:var(--coral-deep)}
+
+  @media(max-width:560px){
+    body{font-size:16px}
+    .vitals{gap:12px}
+    .vital b{font-size:16px}
+    .pulse-wrap{display:none}
+    .face{padding:30px 24px}
+    .qcard{padding:24px 20px 28px}
+    .opt{padding:13px 14px 13px 46px}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .pulse path{animation:none;stroke-dashoffset:0}
+    .card-inner{transition:none}
+  }
+  :focus-visible{outline:3px solid var(--amber);outline-offset:2px;border-radius:6px}
+
+
+  /* ---------- Weighted domain chips ---------- */
+  .chip .wt{
+    font-family:var(--mono);font-size:10px;font-weight:600;margin-left:7px;
+    padding:1px 5px;border-radius:30px;background:var(--paper-2);color:var(--petrol-2);
+    letter-spacing:.04em;transition:.14s;
+  }
+  .chip.on .wt{background:rgba(255,255,255,.16);color:#dff0f0}
+
+  /* ---------- Blueprint (Test Content Outline) ---------- */
+  .bp-intro{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:26px 30px;margin-top:24px;box-shadow:0 18px 40px -30px rgba(14,58,64,.5);
+  }
+  .bp-intro .ey{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--coral-deep);font-weight:600;
+  }
+  .bp-intro h2{font-family:var(--disp);font-weight:800;font-size:clamp(22px,3vw,28px);color:var(--petrol);letter-spacing:-.01em;margin:6px 0 8px;line-height:1.1}
+  .bp-intro p{color:var(--petrol-2);max-width:62ch;font-size:16.5px}
+  .bp-intro .effd{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--petrol-2);opacity:.8;margin-top:10px}
+
+  .bp-grid{display:flex;flex-direction:column;gap:16px;margin-top:18px}
+  .bp-domain{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;box-shadow:0 18px 40px -32px rgba(14,58,64,.5);
+  }
+  .bp-head{
+    display:flex;align-items:stretch;gap:0;cursor:pointer;border:none;width:100%;
+    background:transparent;text-align:left;padding:0;font-family:inherit;
+  }
+  .bp-num{
+    flex:0 0 auto;width:56px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--disp);font-weight:800;font-size:22px;color:#fff;background:var(--petrol);
+  }
+  .bp-headmain{flex:1;padding:16px 18px;min-width:0}
+  .bp-domain h3{font-family:var(--disp);font-weight:800;font-size:18.5px;color:var(--petrol);letter-spacing:-.01em;margin-bottom:9px}
+  .bp-bar{height:9px;border-radius:30px;background:var(--paper-2);overflow:hidden;position:relative}
+  .bp-bar i{display:block;height:100%;border-radius:30px;background:linear-gradient(90deg,var(--teal),var(--coral));width:0;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+  .bp-meta{
+    flex:0 0 auto;align-self:center;padding:0 18px 0 14px;text-align:right;font-family:var(--mono);
+  }
+  .bp-meta b{display:block;font-size:24px;font-weight:600;color:var(--coral-deep);line-height:1}
+  .bp-meta span{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--petrol-2)}
+  .bp-body{padding:10px 20px 20px 20px;display:none;border-top:1px solid var(--line-soft);margin-top:4px}
+  .bp-body.open{display:block}
+  .bp-colhead:first-child{margin-top:6px}
+  .bp-colhead{
+    font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--coral-deep);font-weight:600;margin:14px 0 7px;
+  }
+  .bp-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+  .bp-list li{
+    position:relative;padding-left:20px;font-size:15.5px;line-height:1.4;color:var(--ink);
+  }
+  .bp-list li::before{
+    content:"";position:absolute;left:2px;top:9px;width:7px;height:7px;border-radius:2px;
+    background:var(--teal);transform:rotate(45deg);
+  }
+  .bp-drill{
+    margin-top:16px;font-family:var(--disp);font-weight:700;font-size:13.5px;letter-spacing:.02em;
+    background:var(--coral);border:1px solid var(--coral);color:#fff;
+    padding:11px 18px;border-radius:9px;cursor:pointer;transition:.14s;
+  }
+  .bp-drill:hover{background:var(--coral-deep);border-color:var(--coral-deep)}
+  .bp-foot{
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--petrol-2);
+    text-align:center;margin-top:20px;line-height:1.7;opacity:.85;
+  }
+  .bp-foot b{color:var(--coral-deep)}
+
+  .bp-studyhead{display:flex;align-items:center;gap:8px}
+  .bp-brief{
+    display:none;margin-top:4px;border-left:3px solid var(--coral);background:#fff;
+    border-radius:0 10px 10px 0;padding:4px 20px 8px;
+  }
+  .bp-brief.open{display:block;animation:briefIn .35s ease}
+  @keyframes briefIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .bp-brief p{font-size:16px;line-height:1.62;color:var(--ink);margin:12px 0}
+  .bp-brief p:first-child{margin-top:6px}
+  .bp-brief p:last-child{margin-bottom:4px}
+  .bp-brief strong{font-family:var(--disp);font-weight:700;color:var(--petrol);font-size:15px;letter-spacing:.005em}
+  .bp-brief em{font-style:normal;font-weight:600;color:var(--coral-deep)}
+  .bp-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .bp-briefbtn{
+    font-family:var(--disp);font-weight:700;font-size:13.5px;letter-spacing:.02em;
+    background:var(--card);border:1px solid var(--petrol);color:var(--petrol);
+    padding:11px 18px;border-radius:9px;cursor:pointer;transition:.14s;
+  }
+  .bp-briefbtn:hover{background:var(--petrol);color:#fff}
+  .bp-drill{margin-top:0}
+  @media(max-width:560px){
+    .bp-num{width:44px;font-size:18px}
+    .bp-headmain{padding:13px 12px}
+    .bp-meta{padding:0 12px 0 8px}
+    .bp-meta b{font-size:19px}
+    .bp-intro{padding:20px 18px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <div class="brand">
+      <span class="kick">Nurse Executive · NE-BC · Board Certification</span>
+      <span class="name">Study Station</span>
+    </div>
+    <div class="pulse-wrap" aria-hidden="true">
+      <svg class="pulse" viewBox="0 0 240 40" preserveAspectRatio="none">
+        <path d="M0,20 L40,20 L52,20 L60,6 L70,34 L82,20 L120,20 L132,20 L140,9 L150,31 L160,20 L240,20"/>
+      </svg>
+    </div>
+    <div class="vitals">
+      <div class="vital"><b id="vSeen">0</b><span>Reviewed</span></div>
+      <div class="vital"><b id="vAcc">—</b><span>Accuracy</span></div>
+      <div class="vital"><b id="vStreak">0</b><span>Streak</span></div>
+    </div>
+  </div>
+  <nav class="modes">
+    <div class="mwrap">
+      <button id="mBlue" class="on" onclick="setMode('blueprint')">Exam Blueprint</button>
+      <button id="mFlash" onclick="setMode('flash')">Flashcards</button>
+      <button id="mQuiz" onclick="setMode('quiz')">Practice Questions</button>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="filters" id="filters"></div>
+  <div id="view"></div>
+  <div class="foot">
+    Mapped to the <b>ANCC (American Nurses Credentialing Center) Nurse Executive (NE-BC) Test Content Outline</b> · effective Oct 15, 2025<br>
+    Four scored domains · 125 scored items · content drawn from the Nurse Executive Review &amp; Resource Manual.<br>
+    Progress is tracked for this session only. Filter by domain, or open the Blueprint to drill one area.
+  </div>
+</main>
+
+<script>
+/* =====================================================================
+   CONTENT — mapped to the ANCC Nurse Executive (NE-BC) Test Content
+   Outline, effective Oct 15, 2025. Four scored domains with the
+   official exam weighting; sub-topics mirror the outline's listed
+   knowledge & skill areas. Items written from the source concepts.
+   ===================================================================== */
+
+/* DOMAINS: [id, short label, weight %, full label] */
+const DOMAINS = [
+  ["all", "All Domains",          100, "Full Blueprint"],
+  ["hr",  "Human Resource Mgmt",   32, "Human Resource Management"],
+  ["qs",  "Quality & Safety",      17, "Quality and Safety"],
+  ["bm",  "Business Management",   16, "Business Management"],
+  ["hcd", "Health Care Delivery",  35, "Health Care Delivery"]
+];
+
+/* Sub-topics straight from the outline, grouped by domain — drives the Blueprint view */
+const OUTLINE = {
+  hr: {
+    Knowledge: ["Federal employment laws (Family and Medical Leave Act, Americans with Disabilities Act, Fair Labor Standards Act, National Labor Relations Act)",
+                "Principles & styles of communication",
+                "Cultural humility (diversity, equity, inclusion, belonging)",
+                "Styles of leadership (human-centered, transformational, transactional, situational, coaching)"],
+    Skill:     ["Employee performance management",
+                "Employee engagement & retention",
+                "Team performance (dynamics, conflict resolution)"]
+  },
+  qs: {
+    Knowledge: ["Change management frameworks",
+                "Culture of safety (just culture, high reliability, workplace violence)"],
+    Skill:     ["Continuous process improvement (PDSA [Plan-Do-Study-Act], Lean, root cause analysis)",
+                "Research & evidence-based practice methods"]
+  },
+  bm: {
+    Knowledge: ["Patient payor mix (value-based purchasing, care continuum/throughput)",
+                "Financial compliance laws (Stark, anti-kickback)"],
+    Skill:     ["Financial management (budgeting, HPPD [hours per patient day], resource utilization, cost-benefit)",
+                "Staffing fundamentals (models, skill mix, scheduling)"]
+  },
+  hcd: {
+    Knowledge: ["ANA (American Nurses Association) Code of Ethics",
+                "ANA (American Nurses Association) Nursing Leadership Scope & Standards",
+                "Regulatory & compliance (HIPAA [Health Insurance Portability and Accountability Act], EMTALA [Emergency Medical Treatment and Active Labor Act], corporate compliance)",
+                "Emergency & disaster preparedness",
+                "Social determinants of health & health equity"],
+    Skill:     ["Person-centered care (leader rounding, service recovery)",
+                "Care delivery evaluation (nurse-sensitive indicators, core measures)",
+                "Technology innovation (telehealth, predictive analytics, virtual nursing)"]
+  }
+};
+
+/* ---- STUDY BRIEFS: concise, connected summaries per domain (read before drilling) ---- */
+const STUDY = {
+  hr: `
+    <p><strong>Federal employment laws.</strong> The nurse executive must work hand-in-hand with HR (human resources) to apply overlapping laws. The <em>ADA (Americans with Disabilities Act) (1990, amended 2008)</em> requires <em>reasonable accommodation</em> for qualified individuals with a disability unless it causes <em>undue hardship</em>; its five titles run from employment (Title I) to telecommunications. The <em>Rehabilitation Act of 1973 (Section 504)</em> bars disability discrimination in federally funded programs. <em>Title VII of the Civil Rights Act of 1964</em> prohibits discrimination by race, color, religion, sex, or national origin and is the cornerstone of equal employment opportunity; the <em>ADEA (Age Discrimination in Employment Act)</em> protects workers 40+; the <em>Equal Pay Act</em> requires equal pay for equal work. The <em>FMLA (Family and Medical Leave Act) (1993)</em> grants leave for serious health conditions, birth/adoption, or family care while protecting the job and insurance. The <em>FLSA (Fair Labor Standards Act) (1938)</em> sets minimum wage, overtime (1.5× over 40 hrs/week), and exempt/nonexempt rules — its most-violated areas are overtime, record-keeping, and exempt status. The <em>NLRA (National Labor Relations Act) (Wagner Act)</em> protects the right to organize and bargain; later amendments (Taft-Hartley, Landrum-Griffin) added union limits and the hospital 10-day strike notice. All of these are enforced or interpreted largely through the <em>EEOC (Equal Employment Opportunity Commission)</em>.</p>
+    <p><strong>Communication.</strong> Communication moves through six steps — thinking, encoding, transmitting, perceiving, decoding, understanding — and any break causes miscommunication. <em>Assertive</em> communication uses "I" statements; <em>aggressive</em> uses blaming "you" statements; <em>passive-aggressive</em> expresses negativity indirectly. The biggest communication problem is poor <em>listening</em> (Covey's "seek first to understand"). When verbal and nonverbal messages conflict, people believe the <em>nonverbal</em>. Use <em>SBAR</em> (Situation, Background, Assessment, Recommendation) to standardize handoffs.</p>
+    <p><strong>Cultural humility (DEIB — diversity, equity, inclusion, and belonging).</strong> Leaders <em>leverage diversity</em> as intellectual capital — culture, background, race, and gender enrich quality and problem-solving. Cultural humility is a lifelong, self-reflective stance (not "mastery" of a culture) that builds belonging and ensures everyone is included.</p>
+    <p><strong>Leadership styles.</strong> Theories progress from <em>trait</em> (who the leader is) to <em>behavioral</em> (autocratic, democratic, laissez-faire, bureaucratic) to <em>contingency/situational</em> (match style to the situation — e.g., Hersey &amp; Blanchard's S1–S4 by follower readiness; Fiedler's relationship/task/position factors). <em>Transformational</em> leadership — vision, culture change, empowerment — is the basis of the <em>Magnet</em> program, while <em>transactional</em> leadership maintains the status quo through exchange. The outline also names <em>coaching</em> (day-to-day development from point of hire) and <em>human-centered/servant</em> leadership (people and growth first).</p>
+    <p><strong>Performance, engagement &amp; teams.</strong> <em>Human capital management</em> treats people as the greatest asset and drives engagement, motivation, development, and retention. <em>Coaching, mentoring, and precepting</em> develop and retain staff; <em>succession planning</em> builds internal bench strength. <em>Performance appraisals</em> work best as a development blueprint over time, not as the primary tool to catch problems. Teams move through Tuckman's <em>forming, storming, norming, performing</em>; conflict is resolved best with <em>win-win</em>, interest-based (Fisher &amp; Ury) approaches. Power comes from five sources (legitimate, reward, coercive, referent, expert).</p>`,
+
+  qs: `
+    <p><strong>Change management frameworks.</strong> <em>Lewin's</em> model is the anchor: <em>unfreezing</em> (sense the need, disrupt equilibrium) → <em>movement</em> (plan and implement) → <em>refreezing</em> (sustain). In force-field analysis it is usually easier to <em>reduce restraining forces</em> than to add driving forces, and the single most effective tactic is <em>involving staff</em> in the change. <em>Rogers' diffusion</em> describes adopter groups (innovators 2.5%, early adopters 13.5% — the opinion leaders, early/late majority 34% each, laggards 16%). <em>Senge's</em> learning organization and the "burning platform" explain why and how organizations change under pressure.</p>
+    <p><strong>Culture of safety.</strong> A safety culture rests on <em>just culture</em> (console human error, coach at-risk behavior, discipline reckless behavior) and <em>high-reliability</em> principles (preoccupation with failure, deference to expertise). <em>Risk management</em> proactively identifies and reduces harm and loss. <em>Workplace/lateral violence</em> (bullying, gossip, exclusion, withholding information) creates a hostile, "us vs. them" environment and threatens patient safety — the correct first response is to <em>identify the scope and source</em> (e.g., interview staff), not to suspend or reassign reactively.</p>
+    <p><strong>Continuous process improvement.</strong> The engine of CQI (continuous quality improvement) is the <em>PDSA/PDCA cycle</em> (Plan-Do-Study-Act / Plan-Do-Check-Act), tested in small rapid cycles. <em>Lean</em> eliminates non-value-added waste; <em>root cause analysis</em> looks retrospectively for system causes after adverse events; the <em>Pareto principle</em> targets the "vital few." Deming's TQM (Total Quality Management) and Shewhart's control chart underpin the whole approach.</p>
+    <p><strong>Research &amp; evidence-based practice.</strong> Know the <em>levels of measurement</em> (nominal, ordinal, interval, ratio) and which statistic fits (mode for nominal; mean for interval/ratio). Distinguish <em>validity</em> (measures the right thing) from <em>reliability</em> (measures consistently). The <em>independent</em> variable is the manipulated cause; the <em>dependent</em> is the measured outcome. A <em>true experimental</em> design needs manipulation, a control and experimental group, and a <em>random sample</em>. Frame questions with <em>PICOT (Population, Intervention, Comparison, Outcome, Time)</em>, rank evidence by level (Level I = rigorous RCT [randomized controlled trial] down to expert opinion/preference), and remember subjects may withdraw from a study at any time. EBP succeeds when findings are <em>translated</em> into practice and <em>disseminated</em>.</p>`,
+
+  bm: `
+    <p><strong>Patient payor mix.</strong> <em>DRGs (diagnosis-related group)</em> classify hospitalized patients into fixed-rate groups; Medicare's <em>prospective payment system (PPS)</em> pays a predetermined amount based on the DRG profile, replacing "usual and customary" charges. <em>Capitation</em> pays a fixed rate <em>per member per month</em> regardless of use, shifting risk to the provider — the core of managed care (HMO [health maintenance organization] models: IPA [independent practice association], staff, group, network; PPOs [preferred provider organization] offer more choice at higher out-of-network cost). The largest payor is the U.S. government (<em>Medicare</em> for 65+/ESRD [end-stage renal disease]/disability; <em>Medicaid</em> for low-income groups, jointly funded). <em>Value-based purchasing</em> and the <em>Hospital Value-Based Program</em> tie payment to quality, not volume; <em>ACOs</em> bundle one bill across the <em>care continuum</em>, where managing <em>throughput</em> reduces length of stay and cost.</p>
+    <p><strong>Financial compliance laws.</strong> The <em>Stark Law</em> is a strict-liability <em>civil</em> ban on physician self-referral to entities with which they have a financial relationship. The <em>Anti-Kickback Statute</em> is a <em>criminal</em>, intent-based ban on paying or receiving anything of value to induce referrals. A <em>corporate compliance</em> program (compliance officer, mandatory education, reporting) keeps the organization lawful and ethical; Dodd-Frank protects whistleblowers.</p>
+    <p><strong>Financial management.</strong> A <em>budget</em> is a quantitative expression of management's plans. The four types are <em>revenue</em> (income), <em>expense</em> (salary + nonsalary outflow), <em>capital</em> (equipment/renovation with a multi-year life — a computer is a capital item), and <em>operating</em> (the annual plan). Costs are <em>fixed</em> (rent, insurance) or <em>variable</em> (payroll, supplies) — variable costs are the manager's biggest lever. <em>Variance analysis</em> flags volume, efficiency, rate, and nonsalary deviations. Know <em>break-even</em> (fixed cost ÷ contribution margin), <em>FTE (full-time equivalent)</em> math (1.0 = 40 hrs/wk; 7-day 8-hr coverage = 1.4 FTE), and <em>zero-based budgeting</em> (justify every dollar from zero — used for new services or as a check on the historical budget).</p>
+    <p><strong>Staffing fundamentals.</strong> <em>Staff mix</em> blends RN (registered nurse)/LPN (licensed practical nurse)/UAP (unlicensed assistive personnel) by acuity and philosophy; <em>HPPD</em> (nursing hours per patient day) and <em>utilization rate</em> measure productivity. <em>Patient classification/acuity</em> systems (Level I least to IV most intense) drive staffing, and a <em>position control plan</em> sets required FTEs. When short-staffed on a high-acuity unit, the safest and most cost-effective move is usually to reassign a like-licensed staffer from a <em>low-census, low-acuity</em> unit before paying agency premiums.</p>`,
+
+  hcd: `
+    <p><strong>Ethics &amp; the ANA (American Nurses Association) Code.</strong> The <em>ANA Code of Ethics for Nurses</em> compels practice "with compassion and respect for the inherent dignity, worth, and uniqueness of every individual." Two theory families anchor dilemmas: <em>deontology</em> (rule-based — an act is right in itself) and <em>teleology</em> (the end justifies the act — <em>utilitarianism</em> = greatest good for the greatest number). <em>Rawlsian</em> justice centers the least advantaged. Four principles guide practice: <em>respect for persons/autonomy</em>, <em>beneficence</em>, <em>justice</em>, and veracity/confidentiality. An <em>ethical dilemma</em> is a clash of values; use a systematic ethics work-up. Nurses act as <em>advocates</em> and may refuse an assignment on deeply held beliefs.</p>
+    <p><strong>Regulatory &amp; compliance.</strong> <em>HIPAA (Health Insurance Portability and Accountability Act)</em> protects health information from release to anyone not directly involved in care without permission. <em>EMTALA (Emergency Medical Treatment and Active Labor Act)</em> requires an emergency screening exam and stabilization regardless of ability to pay. Liability concepts: <em>negligence</em> vs. professional <em>malpractice</em> (duty → breach → causation → injury, all four required), <em>tort</em> (a civil wrong), and <em>respondeat superior</em> (employer liable for employee acts). The <em>PSDA (Patient Self-Determination Act) (1990)</em> — a result of the <em>Cruzan</em> case — guarantees advance directives; <em>COBRA (Consolidated Omnibus Budget Reconciliation Act)</em> continues group coverage after qualifying events. The <em>Patient Bill of Rights</em> and landmark cases (Quinlan, Jobes, Cruzan, Schiavo) frame end-of-life rights.</p>
+    <p><strong>Nursing theory &amp; care models.</strong> The metaparadigm is <em>nurse, person, environment, health</em>, applied through the nursing process (assess, plan, intervene, evaluate). <em>Middle-range theories</em> are the most practice-applicable. Key theorists: Nightingale (environment + statistics), Peplau (interpersonal phases), Orem (self-care), Roy (adaptation), Neuman (systems/stressors), Watson/Leininger (caring/transcultural). Care delivery models include <em>primary, team, functional</em>, and <em>case management</em> (continuum of care across settings).</p>
+    <p><strong>Technology innovation.</strong> EHRs mature from automated records to the full electronic health record. <em>Telehealth</em> connects provider and patient across distance; <em>telehomecare</em>, <em>remote monitoring</em>, <em>predictive analytics</em>, and <em>virtual nursing</em> extend capacity and enable earlier intervention — all under the privacy/quality goals of Meaningful Use.</p>
+    <p><strong>Person-centered care &amp; evaluation.</strong> <em>Leader rounding</em>, <em>patient engagement</em>, and <em>service recovery</em> (apologize → listen → fix → follow up → document/trend) drive the experience. Care is evaluated with <em>nurse-sensitive indicators</em> (NDNQI — National Database of Nursing Quality Indicators), <em>core measures</em>, <em>care coordination</em>, and the patient-experience survey <em>HCAHPS (Hospital Consumer Assessment of Healthcare Providers and Systems)</em>, which is tied to reimbursement.</p>
+    <p><strong>SDOH, equity, emergency prep &amp; scope.</strong> <em>Social determinants of health</em> (economic stability, education, access, environment, social context) shape outcomes; the goal of <em>health equity</em> is a fair opportunity for everyone to be healthy. Emergency management cycles through <em>mitigation, preparedness, response, recovery</em> with surge capacity. The <em>ANA Nursing Administration Scope &amp; Standards</em> defines the leader's accountability, and nurse leaders exert policy influence across four spheres — workplace, profession, community, and government.</p>`
+};
+
+/* ---- FLASHCARDS: {d:domain, s:sub-topic, q:front, a:back(html ok)} ---- */
+const CARDS = [
+
+  /* ============ HUMAN RESOURCE MANAGEMENT ============ */
+
+  // Leadership styles
+  {d:"hr",s:"Leadership Styles",q:"Trait Theory of leadership",a:"Assumes leaders possess inherent <em>characteristics</em> — drive, persistence, self-confidence, integrity, intelligence, tact, ability to influence. Focus is on who the leader <em>is</em>."},
+  {d:"hr",s:"Leadership Styles",q:"Behavioral Theory of leadership",a:"Focuses on what leaders <em>do</em> rather than what they are. Classifies leaders by style: autocratic, democratic, laissez-faire (permissive), bureaucratic."},
+  {d:"hr",s:"Leadership Styles",q:"Autocratic leader",a:"Changes follower behavior through <em>external control</em> — coercion, authority, punishment, and power."},
+  {d:"hr",s:"Leadership Styles",q:"Democratic leader",a:"Influences change through <em>participation</em>, involving subordinates in goal-setting, and collaboration."},
+  {d:"hr",s:"Leadership Styles",q:"Laissez-faire (permissive) leader",a:"Uses a <em>hands-off</em> approach, assuming people can make their own decisions and complete work without direction."},
+  {d:"hr",s:"Leadership Styles",q:"Bureaucratic leader",a:"Relies on organizational <em>policies and rules</em> to influence subordinate behavior; assumes external motivators drive staff."},
+  {d:"hr",s:"Leadership Styles",q:"Internal vs. external locus of control by style",a:"Autocratic & bureaucratic leaders assume <em>external</em> motivators drive change. Democratic & laissez-faire leaders believe change is <em>internally</em> inspired."},
+  {d:"hr",s:"Leadership Styles",q:"Likert's System 4 Management",a:"Rates leadership by degree of decision-making involvement: <em>autocratic, benevolent, consultative, participative</em>. Greater involvement = greater commitment."},
+  {d:"hr",s:"Leadership Styles",q:"Contingency / Situational Theory",a:"No single style works in every situation; the effective leader <em>adapts</em> to the circumstances (e.g., democratic in stability, autocratic in an emergency)."},
+  {d:"hr",s:"Leadership Styles",q:"Fiedler's three leadership factors",a:"(1) Manager–follower relationships, (2) Task structure, (3) Position power. Change succeeds best when relations are good, task is structured, and position power is high."},
+  {d:"hr",s:"Leadership Styles",q:"Hersey & Blanchard — four styles (S1–S4)",a:"<em>S1 Telling</em> (high task/low rel) · <em>S2 Selling</em> (high/high) · <em>S3 Participating</em> (low task/high rel) · <em>S4 Delegating</em> (low/low). Style chosen by follower readiness."},
+  {d:"hr",s:"Leadership Styles",q:"Hersey & Blanchard — follower readiness (R1–R4)",a:"R1 unable & unwilling/insecure · R2 unable but willing/confident · R3 able but unwilling/insecure · R4 able & willing/confident."},
+  {d:"hr",s:"Leadership Styles",q:"Vroom & Yetton expectancy model",a:"A prescriptive model for how much participation to seek. Manager chooses among: <em>tell, sell, consult, join, delegate</em>."},
+  {d:"hr",s:"Leadership Styles",q:"Transformational leadership",a:"Transforms the organization through cultural change and vision; inspires risk-taking and self-actualization. Basis of the ANCC (American Nurses Credentialing Center) <em>Magnet Recognition Program</em>."},
+  {d:"hr",s:"Leadership Styles",q:"Transactional leadership",a:"Based on social-exchange — reciprocal benefits between leader and follower; interactions maintain balance and the <em>status quo</em>."},
+  {d:"hr",s:"Leadership Styles",q:"Coaching leadership",a:"A day-to-day developmental style that helps employees improve performance through needs analysis, active listening, problem-solving, and feedback. Coaching begins at the <em>point of hire</em>."},
+  {d:"hr",s:"Leadership Styles",q:"Human-centered & servant leadership",a:"Puts the needs and growth of people before the leader's self-interest; tied to <em>stewardship</em>. Emphasizes psychological safety, belonging, and well-being of staff."},
+  {d:"hr",s:"Leadership Styles",q:"Charismatic & connective leadership",a:"<em>Charismatic</em> engages others through personality and emotional connection. <em>Connective</em> brings disparate groups together as a bridge-builder via collaboration and coordination."},
+
+  // Communication
+  {d:"hr",s:"Communication",q:"Six key processes of communication",a:"Thinking → Encoding → Transmitting (sender) → Perceiving → Decoding → Understanding (receiver). Failure of any step causes miscommunication."},
+  {d:"hr",s:"Communication",q:"Directions of managerial communication",a:"<em>Upward</em> (subordinate→manager, often filtered), <em>Downward</em> (manager→subordinate), <em>Lateral/diagonal</em> (across departments — for coordination, but unstable)."},
+  {d:"hr",s:"Communication",q:"Assertive vs. aggressive communication",a:"Assertive uses <em>'I'</em> statements about oneself. Aggressive uses <em>'you'</em> and blames, putting others on the defensive."},
+  {d:"hr",s:"Communication",q:"Passive-aggressive communication",a:"Expresses negative feelings <em>indirectly</em> — e.g., agreeing to a task while resenting it and then not completing it."},
+  {d:"hr",s:"Communication",q:"SBAR (Situation, Background, Assessment, Recommendation)",a:"<em>Situation, Background, Assessment, Recommendation</em> — a standardized tool for effective communication during client handoffs."},
+  {d:"hr",s:"Communication",q:"Listening & Covey's 5th habit",a:"The most significant communication problem is poor <em>listening</em>. Covey: 'Seek first to understand, then to be understood.' Develop empathetic listening above speaking skills."},
+  {d:"hr",s:"Communication",q:"Nonverbal communication",a:"Cannot be eliminated in face-to-face encounters and differs across cultures. When verbal and nonverbal messages conflict, the <em>nonverbal</em> message is given more credence."},
+
+  // Management foundations (people & motivation)
+  {d:"hr",s:"Management Foundations",q:"Traditional functions of management",a:"<em>Plan, Organize, Staff, Lead, Control, Coordinate.</em>"},
+  {d:"hr",s:"Management Foundations",q:"Chain of command",a:"An unbroken line of authority from top to bottom; each unit connects to the one above it, ensuring two-way information flow."},
+  {d:"hr",s:"Management Foundations",q:"Unity of command",a:"Each subordinate is accountable to <em>only one</em> superior, with clearly defined expectations."},
+  {d:"hr",s:"Management Foundations",q:"Span of control",a:"The scope of responsibility of a given manager — how many people/units they oversee."},
+  {d:"hr",s:"Management Foundations",q:"Scientific management (Taylor)",a:"Frederick Taylor, 'father of scientific management.' Core concept = <em>efficiency</em> via standards, time–motion studies, task analysis, and productivity incentives."},
+  {d:"hr",s:"Management Foundations",q:"Process management (Fayol)",a:"Henri Fayol's process school examined the whole organization; defined universal principles: span of control, chain of command, accountability, responsibility, planning, organizing, coordinating, controlling."},
+  {d:"hr",s:"Management Foundations",q:"Mintzberg's manager roles",a:"<em>Interpersonal</em> (figurehead, leader, liaison), <em>Informational</em> (monitor, disseminator, spokesperson), <em>Decisional</em> (entrepreneur, disturbance handler, resource allocator, negotiator)."},
+  {d:"hr",s:"Management Foundations",q:"Hawthorne effect",a:"From the Hawthorne studies (Mayo): workers perform differently when they know they are being <em>observed</em>, regardless of physical conditions."},
+  {d:"hr",s:"Management Foundations",q:"Maslow's Hierarchy of Needs",a:"Lower needs precede higher: <em>Physiological → Safety → Affiliation → Esteem → Self-actualization.</em>"},
+  {d:"hr",s:"Management Foundations",q:"Herzberg's Two-Factor Theory",a:"<em>Hygiene factors</em> (pay, policy, conditions, supervision) prevent dissatisfaction but don't motivate. <em>Motivators</em> (achievement, recognition, growth, responsibility) drive satisfaction."},
+  {d:"hr",s:"Management Foundations",q:"Bounded rationality (Herbert Simon)",a:"Leaders cannot make perfectly rational decisions — incomplete information, complex problems, limited processing capacity, limited time, conflicting goals."},
+  {d:"hr",s:"Management Foundations",q:"Matrix structure",a:"Combines functional and divisional patterns; employees report to more than one boss, 'violating' unity of command. Requires exceptional communication."},
+  {d:"hr",s:"Management Foundations",q:"Centralized vs. decentralized",a:"Centralized = top-down decisions along the chain of command. The more decisions are pushed down, the more decentralized — building lower-manager skill and satisfaction."},
+
+  // Cultural humility
+  {d:"hr",s:"Cultural Humility (Diversity, Equity, Inclusion, Belonging)",q:"Leveraging diversity",a:"The leader maximizes all talents and intellectual capital; an individual's culture, background, race, and gender <em>enrich</em> quality, productivity, and problem-solving in a civil, inclusive environment."},
+  {d:"hr",s:"Cultural Humility (Diversity, Equity, Inclusion, Belonging)",q:"Dimensions of diversity",a:"Age, gender, sexual orientation, ability/disability, ethnicity, socioeconomic status, education, and national origin — considered from both an <em>ethical</em> and a <em>business</em> perspective."},
+  {d:"hr",s:"Cultural Humility (Diversity, Equity, Inclusion, Belonging)",q:"Cultural humility & belonging",a:"A lifelong, self-reflective commitment to learning from others' cultures rather than mastering them. Pairs with diversity, equity, inclusion, and <em>belonging</em> (DEIB — diversity, equity, inclusion, and belonging) to ensure everyone is included in all aspects of the organization."},
+  {d:"hr",s:"Cultural Humility (Diversity, Equity, Inclusion, Belonging)",q:"High-context vs. low-context language",a:"Concepts in 'low-context' English (e.g., 'do not resuscitate') may have <em>no equivalent</em> in 'high-context' languages — a cultural-competence challenge for the executive."},
+
+  // Federal employment laws
+  {d:"hr",s:"Federal Employment Laws",q:"Americans with Disabilities Act (1990, amended 2008)",a:"Ensures qualified persons with disabilities have equal employment opportunity; requires <em>reasonable accommodation</em> unless it imposes <em>undue hardship</em>. Title I = Employment. Enforced by the EEOC (Equal Employment Opportunity Commission)."},
+  {d:"hr",s:"Federal Employment Laws",q:"The five titles of the ADA (Americans with Disabilities Act)",a:"<em>I</em> Employment · <em>II</em> Public Services · <em>III</em> Public Accommodations (private entities) · <em>IV</em> Telecommunications Relay · <em>V</em> Misc. Provisions (state immunity, attorney fees, anti-retaliation)."},
+  {d:"hr",s:"Federal Employment Laws",q:"ADA (Americans with Disabilities Act) Amendments Act (2008) — 3 strategies",a:"To navigate the ADA (Americans with Disabilities Act): (1) delineate mandatory job functions, (2) make the work environment accessible (remove barriers), (3) prepare job descriptions <em>before</em> advertising or interviewing."},
+  {d:"hr",s:"Federal Employment Laws",q:"Rehabilitation Act of 1973 — Section 504",a:"Prohibits employment discrimination against a qualified individual <em>solely</em> because of disability in programs receiving federal funds; requires reasonable accommodation unless it causes undue hardship. Enforced by HHS (U.S. Department of Health and Human Services) Office of Civil Rights."},
+  {d:"hr",s:"Federal Employment Laws",q:"ADEA (Age Discrimination in Employment Act) (1967, amended 1978)",a:"Age Discrimination in Employment Act — protects workers <em>age 40+</em>; prohibits arbitrary age discrimination; promotes employment based on ability. Enforced by the EEOC (Equal Employment Opportunity Commission)."},
+  {d:"hr",s:"Federal Employment Laws",q:"Title VII, Civil Rights Act of 1964",a:"Prohibits employment discrimination based on <em>race, color, religion, sex, or national origin</em>. Cornerstone of equal employment opportunity; EEOC (Equal Employment Opportunity Commission) reads sex to include gender identity & sexual orientation."},
+  {d:"hr",s:"Federal Employment Laws",q:"Civil Rights Act of 1991",a:"Allows <em>compensatory & punitive damages</em> and jury trials for intentional discrimination (sex, religion, disability); awards range $50,000–$300,000 by workforce size. Adds technical assistance/training."},
+  {d:"hr",s:"Federal Employment Laws",q:"Bona fide occupational qualification (BFOQ)",a:"A narrow Title VII exception permitting consideration of sex, religion, or national origin when it is genuinely necessary to the job's operation."},
+  {d:"hr",s:"Federal Employment Laws",q:"EEOC (Equal Employment Opportunity Commission) & affirmative action",a:"The EEOC (Equal Employment Opportunity Commission) enforces Title VII, ADA (Americans with Disabilities Act), ADEA (Age Discrimination in Employment Act), and EPA (Equal Pay Act); investigates and may sue employers. <em>Affirmative action</em> goes further — federal contractors must take steps to enhance opportunity for protected groups."},
+  {d:"hr",s:"Federal Employment Laws",q:"Family Medical Leave Act (1993, amended 2008)",a:"Entitles eligible employees to reasonable leave for a serious health condition, birth/adoption, or care of a family member, while maintaining insurance and an equal position. 2008 amendment ensures gender-neutral leave."},
+  {d:"hr",s:"Federal Employment Laws",q:"Fair Labor Standards Act (1938)",a:"Sets minimum wage, overtime (1.5× over 40 hrs/week), record-keeping, and child-labor standards. Most-violated areas: <em>overtime pay, record-keeping, and exempt status</em>."},
+  {d:"hr",s:"Federal Employment Laws",q:"FLSA (Fair Labor Standards Act) — exempt vs. nonexempt",a:"Exempt (executive/administrative/professional/outside sales) employees are exempt from minimum wage & overtime. Status depends on <em>salary level, salary basis, and job duties</em> — not on title or being salaried."},
+  {d:"hr",s:"Federal Employment Laws",q:"Equal Pay Act of 1963",a:"Amended the FLSA (Fair Labor Standards Act) to require men and women receive <em>equal pay</em> for equal work (equal skill, effort, responsibility, similar conditions) in the same establishment."},
+  {d:"hr",s:"Federal Employment Laws",q:"Two types of sexual harassment",a:"<em>Quid pro quo</em> (benefit conditioned on sexual demands) and <em>hostile work environment</em> (pervasive unwelcome conduct that alters the work environment)."},
+
+  // Labor relations & collective bargaining
+  {d:"hr",s:"Labor Relations & Bargaining",q:"National Labor Relations Act (Wagner Act, 1935)",a:"Primary private-sector labor law. Guarantees the right to self-organize, form/join unions, and bargain collectively; created the <em>NLRB (National Labor Relations Board)</em> to administer it."},
+  {d:"hr",s:"Labor Relations & Bargaining",q:"Taft–Hartley & Landrum–Griffin",a:"<em>Taft-Hartley (1947)</em> amended the NLRA (National Labor Relations Act) to restrain unions (mass picketing, secondary boycotts) and added the hospital 10-day strike notice. <em>Landrum-Griffin (1959)</em> added a union-member bill of rights and democratic procedures."},
+  {d:"hr",s:"Labor Relations & Bargaining",q:"Collective bargaining",a:"A negotiated agreement between a union and employer setting terms of employment (wages, hours, conditions, benefits) for a defined group. The ANA (American Nurses Association)'s 1946 EG&W (Economic and General Welfare) Program advanced it for nurses."},
+  {d:"hr",s:"Labor Relations & Bargaining",q:"Grievance & arbitration",a:"A negotiated grievance procedure resolves disputes; unresolved grievances go to binding <em>arbitration</em> (an impartial third party). Only union or management may invoke arbitration."},
+  {d:"hr",s:"Labor Relations & Bargaining",q:"10-day strike notice (hospitals)",a:"The 1947 Wagner Act amendment requires unions to give a healthcare facility <em>10 days' written notice</em> before a strike, so the organization can prepare to maintain patient care."},
+
+  // Teams, conflict, power
+  {d:"hr",s:"Teams, Conflict & Power",q:"Tuckman's stages of group development",a:"<em>Forming, Storming, Norming, Performing, Adjourning.</em> (Adjourning added by Tuckman & Jensen, 1977.)"},
+  {d:"hr",s:"Teams, Conflict & Power",q:"Storming stage",a:"Members compete for position, power, and status; informal leaders emerge. Critical to team success — real teams require taking risks and addressing conflict."},
+  {d:"hr",s:"Teams, Conflict & Power",q:"Types of conflict",a:"<em>Intrapersonal</em> (within self), <em>Interpersonal</em> (self vs. another), <em>Intragroup</em> (within a group), <em>Intergroup</em> (between groups)."},
+  {d:"hr",s:"Teams, Conflict & Power",q:"Win-win conflict strategies",a:"Focus on goals not personalities; meet both parties' needs; build consensus. Modes: compromise, competing, cooperating, smoothing, avoiding, collaborating."},
+  {d:"hr",s:"Teams, Conflict & Power",q:"Principled negotiation (Fisher & Ury)",a:"(1) Separate people from the problem, (2) focus on interests not positions, (3) invent options for mutual gain, (4) insist on objective criteria."},
+  {d:"hr",s:"Teams, Conflict & Power",q:"Five sources of power (French & Raven)",a:"<em>Legitimate</em> (position), <em>Reward</em>, <em>Coercive</em> (punishment), <em>Referent</em> (charisma), <em>Expert</em> (knowledge)."},
+  {d:"hr",s:"Teams, Conflict & Power",q:"Appreciative Inquiry — the 4 Ds",a:"<em>Discover</em> the best of what is, <em>Dream</em> what might be, <em>Design</em> what should be, create a <em>Destiny</em> of what will be."},
+
+  // Human capital, performance, engagement & retention
+  {d:"hr",s:"Human Capital & Performance",q:"Human capital",a:"<em>Organizational:</em> a group's collective knowledge, skills, and abilities, with belief that investment in development yields future ROI (return on investment). <em>Personal:</em> productive personal attributes in an economic context."},
+  {d:"hr",s:"Human Capital & Performance",q:"Human Capital Management (HCM)",a:"Fosters a positive work environment; successful HCM (human capital management) promotes employee <em>engagement, motivation, development, and retention</em>. People are the organization's greatest asset."},
+  {d:"hr",s:"Human Capital & Performance",q:"Drivers of employee satisfaction",a:"Supportive leadership and clear goals, respect, regular recognition, empowerment, competitive pay/benefits, and company activities. Measured via satisfaction surveys and focus groups."},
+  {d:"hr",s:"Human Capital & Performance",q:"Coaching, mentoring & precepting",a:"<em>Coaching</em> = day-to-day performance help from hire. <em>Mentoring</em> = a more experienced staffer guides a less experienced one (improves retention). <em>Precepting</em> = transitioning new nurses into the clinical environment."},
+  {d:"hr",s:"Human Capital & Performance",q:"Succession planning",a:"Identifying and developing internal leadership potential to prepare for inevitable leadership transition — building 'bench strength,' diversifying candidate pools, and increasing flexibility. A required nurse-executive competency."},
+  {d:"hr",s:"Human Capital & Performance",q:"Performance appraisals",a:"Tools to assess competence and serve as a blueprint for development. Best used to identify performance <em>over time</em>, not as the primary tool to catch behavior issues."},
+  {d:"hr",s:"Human Capital & Performance",q:"Credentialing, privileging & certification",a:"<em>Credentialing</em> grants authority to provide care (review of education/licensure). <em>Privileging</em> grants permission for specific care. <em>Certification</em> = a nongovernmental agency validates qualifications in a clinical area."},
+  {d:"hr",s:"Human Capital & Performance",q:"Nurse Practice Act",a:"State law that defines and governs nursing practice, regulates admission to the profession, defines scope and titles, sets up the Board of Nursing, and protects the public from unqualified practitioners."},
+  {d:"hr",s:"Human Capital & Performance",q:"Internal recruitment & retention",a:"Consider internal candidates first — they know the culture, have networks, and reduce ramp-up. Retention strategies include mentoring, being an 'employer of choice,' and competitive compensation."},
+
+  /* ============ QUALITY AND SAFETY ============ */
+
+  // Change management
+  {d:"qs",s:"Change Management",q:"Lewin's three-stage change model",a:"<em>Unfreezing</em> (sense a need / disrupt the status quo), <em>Movement</em> (plan & implement), <em>Refreezing</em> (integrate & sustain)."},
+  {d:"qs",s:"Change Management",q:"Lewin's force-field analysis",a:"Equilibrium is held by balancing <em>driving</em> and <em>restraining</em> forces. It is usually easier and more productive to <em>reduce restraining forces</em> than to add driving forces."},
+  {d:"qs",s:"Change Management",q:"Rogers' Diffusion of Innovation — adopters",a:"<em>Innovators 2.5% · Early adopters 13.5% · Early majority 34% · Late majority 34% · Laggards 16%.</em> Early adopters are respected opinion leaders who build momentum."},
+  {d:"qs",s:"Change Management",q:"Learning Organization (Senge)",a:"Open systems respond to unpredictable change through learning: <em>systems thinking, personal mastery, shared vision, team learning, mental models</em> (The Fifth Discipline)."},
+  {d:"qs",s:"Change Management",q:"Chaos theory & burning platform",a:"<em>Chaos theory:</em> a cyclical pattern of disruption, innovation, stabilization. <em>Burning platform:</em> rapid large-scale change occurs only when keeping the status quo equals disaster."},
+  {d:"qs",s:"Change Management",q:"Buckingham — strengths-based change",a:"Marcus Buckingham is noted for focusing development on a person's <em>strengths</em> rather than fixing weaknesses — engaging staff in change builds buy-in and ownership."},
+
+  // Culture of safety
+  {d:"qs",s:"Culture of Safety",q:"Lateral violence (nurse bullying)",a:"A catch-all for bullying, gossip, scapegoating, intimidation, exclusion, and withholding information among peers. Creates a hostile, 'us vs. them' environment and threatens patient safety."},
+  {d:"qs",s:"Culture of Safety",q:"First step in addressing lateral violence",a:"<em>Identify the scope and source</em> of the problem first (e.g., interview the staff). Immediate suspensions or random reassignments only increase hostility and undermine fragile mentoring relationships."},
+  {d:"qs",s:"Culture of Safety",q:"Just culture",a:"A blame-balanced safety model distinguishing <em>human error</em> (console), <em>at-risk behavior</em> (coach), and <em>reckless behavior</em> (discipline). Encourages reporting without fear to learn from error."},
+  {d:"qs",s:"Culture of Safety",q:"High reliability organization (HRO)",a:"Operates in high-risk conditions with very few failures via: preoccupation with failure, reluctance to simplify, sensitivity to operations, commitment to resilience, and deference to expertise."},
+  {d:"qs",s:"Culture of Safety",q:"Healthy work environment & employee safety",a:"OSHA (Occupational Safety and Health Administration) secures the right to a safe workplace; a healthy work environment adds skilled communication, true collaboration, effective decision-making, appropriate staffing, recognition, and authentic leadership."},
+  {d:"qs",s:"Culture of Safety",q:"Risk management",a:"A proactive program to identify, evaluate, and reduce the risk of injury to patients, staff, and visitors and the risk of financial loss — through incident reporting, trending, and prevention."},
+
+  // Continuous process improvement
+  {d:"qs",s:"Process Improvement",q:"PDSA (Plan-Do-Study-Act) / PDCA (Plan-Do-Check-Act) cycle",a:"<em>Plan–Do–Study(Check)–Act</em> — the iterative model underlying continuous quality improvement, tested in small rapid cycles and graphed over time."},
+  {d:"qs",s:"Process Improvement",q:"Lean",a:"A method to maximize value and eliminate <em>waste</em> (non-value-added steps) in a process, improving flow and efficiency from the customer's perspective."},
+  {d:"qs",s:"Process Improvement",q:"Root cause analysis (RCA)",a:"A structured, retrospective review after an adverse/sentinel event to find the <em>underlying system causes</em> (not individuals) and put corrective actions in place."},
+  {d:"qs",s:"Process Improvement",q:"Pareto Principle",a:"Focus improvement on the 'vital few' factors that drive most of the impact, rather than the 'trivial many.'"},
+  {d:"qs",s:"Process Improvement",q:"Deming & TQM (Total Quality Management)",a:"W. Edwards Deming's 14 Points hold that the interaction of <em>materials, machines, and people</em> determines quality and productivity — the foundation of Total Quality Management."},
+  {d:"qs",s:"Process Improvement",q:"Shewhart control chart & benchmarking",a:"Walter Shewhart, 'father of statistical quality control,' developed the <em>control chart</em>. <em>Benchmarking</em> compares performance to best-in-class standards/competitors."},
+  {d:"qs",s:"Process Improvement",q:"Malcolm Baldrige National Quality Award",a:"Honors organizations exemplifying commitment to TQM (Total Quality Management). SSM Health Care (2002) was the first health-care recipient."},
+
+  // Research & Evidence-Based Practice
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Levels of measurement (data)",a:"<em>Nominal</em> (categories, no order), <em>Ordinal</em> (ordered, gaps not meaningful), <em>Interval</em> (equal intervals, no true zero), <em>Ratio</em> (interval + absolute zero)."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Measures of central tendency",a:"<em>Mean</em> (average — interval/ratio), <em>Median</em> (midpoint — ordinal+), <em>Mode</em> (most frequent — the only one valid for nominal data)."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Standard deviation",a:"The most stable measure of variability. ~68% of values fall within ±1 SD (standard deviation), ~95% within ±2 SD of the mean."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Validity vs. reliability",a:"<em>Validity</em> = the instrument measures what it should. <em>Reliability</em> = it measures consistently. An instrument can be reliable without being valid, but not valid without being reliable."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Independent vs. dependent variable",a:"<em>Independent</em> (manipulated) = the presumed cause, occurs first. <em>Dependent</em> (outcome) = the measured effect. ('Turnover is greater under authoritarian leadership' — leadership = the independent variable (IV), turnover = the dependent variable (DV).)"},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Operational definition",a:"Specifies exactly how a variable will be <em>defined and measured</em> in the study, so terms with multiple meanings are applied consistently."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Probability vs. nonprobability sampling",a:"<em>Probability</em> (random, stratified, cluster) permits generalization. <em>Nonprobability</em> (convenience, purposive, quota, snowball) cannot be generalized beyond the study group."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"True experimental design",a:"Requires manipulation of an independent variable, a <em>control group and an experimental group</em>, and a <em>random sample</em> — the strongest design for cause-and-effect."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Hypotheses (null vs. alternate)",a:"The <em>null</em> hypothesis states no difference between groups; the <em>alternate</em> states the researcher's expected outcome. A hypothesis expresses expectations in a quantitative study."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"PICO (Population, Intervention, Comparison, Outcome)(T) format",a:"<em>P</em>opulation · <em>I</em>ntervention · <em>C</em>omparison · <em>O</em>utcome · <em>T</em>ime — the EBP (evidence-based practice) question framework (Melnyk & Fineout-Overholt)."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Levels of evidence",a:"I = rigorous RCT (randomized controlled trial) · II = quasi-experimental · III = qualitative · IV = guidelines/clinical expertise · V = patient preference/values."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Translation & dissemination",a:"EBP (evidence-based practice) makes research visible in practice; findings are <em>translated</em> into protocols to guide decisions and <em>disseminated</em> via journal clubs, presentations, and publications."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"IRB (Institutional Review Board) & protection of human subjects",a:"Institutional Review Boards protect participants; subjects may <em>withdraw at any time</em> without penalty. HIPAA (Health Insurance Portability and Accountability Act) adds protection for how health data is accessed and reported."},
+
+  /* ============ BUSINESS MANAGEMENT ============ */
+
+  // Patient payor mix
+  {d:"bm",s:"Patient Payor Mix",q:"Diagnosis-Related Groups (DRGs)",a:"A classification (400+) of hospitalized clients by primary/secondary diagnosis, age, and treatment. Each DRG (diagnosis-related group) carries a <em>fixed reimbursement rate</em>; in use since 1983 to deter Medicare cost-shifting."},
+  {d:"bm",s:"Patient Payor Mix",q:"Prospective Payment System (PPS)",a:"Transfers a <em>predetermined</em> amount to hospitals based on the facility's DRG (diagnosis-related group) profile and anticipated utilization — ending the old 'usual and customary' charge-based system."},
+  {d:"bm",s:"Patient Payor Mix",q:"Capitation",a:"A fixed, negotiated rate per member <em>per month (PM/PM)</em>, paid whether or not the member uses services. Shifts risk to the provider; central to managed-care cost containment."},
+  {d:"bm",s:"Patient Payor Mix",q:"HMO (health maintenance organization) models",a:"<em>IPA (independent practice association)</em> (open-panel contract), <em>Staff</em> (physicians salaried by the HMO [health maintenance organization]), <em>Group</em> (one multispecialty group), <em>Network</em> (two+ groups). HMOs emphasize prevention, prepayment, and provider risk."},
+  {d:"bm",s:"Patient Payor Mix",q:"PPO (preferred provider organization) vs. HMO (health maintenance organization)",a:"A <em>PPO (preferred provider organization)</em> brokers between purchaser and provider; clients may go out-of-network at higher cost, and providers take a discounted fee without risk-sharing — more choice than a staff-model HMO (health maintenance organization)."},
+  {d:"bm",s:"Patient Payor Mix",q:"Medicare vs. Medicaid",a:"<em>Medicare</em> (1965, Title XVIII) covers age 65+, ESRD (end-stage renal disease), and disability. <em>Medicaid</em> (1965) is a welfare program for low-income groups, funded jointly federal/state. Both may run as managed-care contracts."},
+  {d:"bm",s:"Patient Payor Mix",q:"Value-based purchasing (VBP)",a:"Pays providers for the <em>value</em> (quality/outcomes) of care, not just volume. Example: a hospital guarantees one price; a post-surgical complication readmission incurs no additional charge."},
+  {d:"bm",s:"Patient Payor Mix",q:"Hospital Value-Based Program (HVBP)",a:"CMS (Centers for Medicare and Medicaid Services) links inpatient acute-care payment to quality across four domains: clinical care; patient/caregiver experience & coordination; safety & efficiency; and cost reduction."},
+  {d:"bm",s:"Patient Payor Mix",q:"Accountable Care Organizations (ACOs)",a:"Bundle one bill across settings (e.g., primary care → surgery → rehab → home PT [physical therapy]). Better quality generally yields better reimbursement; a <em>medical home</em> is integral."},
+  {d:"bm",s:"Patient Payor Mix",q:"Care continuum & patient throughput",a:"Moving the patient efficiently and safely across settings (admission → care → discharge/transition). <em>Throughput</em> management reduces bottlenecks, length of stay, and avoidable cost."},
+
+  // Financial compliance laws
+  {d:"bm",s:"Financial Compliance Laws",q:"Stark Law (physician self-referral)",a:"Prohibits a physician from referring Medicare/Medicaid patients for certain 'designated health services' to an entity with which the physician (or family) has a <em>financial relationship</em>, unless an exception applies. A strict-liability civil statute."},
+  {d:"bm",s:"Financial Compliance Laws",q:"Anti-Kickback Statute",a:"A <em>criminal</em> law prohibiting knowingly offering, paying, soliciting, or receiving anything of value to induce or reward referrals of federally reimbursable services. Requires intent; penalties include fines, exclusion, and imprisonment."},
+  {d:"bm",s:"Financial Compliance Laws",q:"Corporate compliance",a:"A formal program ensuring lawful, ethical operations — originated in nursing-home billing to avoid Medicare/Medicaid fraud. Most organizations name a compliance officer and mandate staff education and reporting."},
+  {d:"bm",s:"Financial Compliance Laws",q:"Dodd-Frank whistleblower program",a:"Prohibits employers from interfering with whistleblowers; employees who report violations may receive protection and a reward. Eligibility covers the disclosure, the whistleblower, and anti-retaliation provisions."},
+
+  // Financial management
+  {d:"bm",s:"Financial Management",q:"What a budget is",a:"A formal, quantitative expression of management's plans and expectations over a set period. It forces forward thinking, compels choices, aids communication, and provides a basis for control."},
+  {d:"bm",s:"Financial Management",q:"Four budget types",a:"<em>Revenue</em> (anticipated income), <em>Expense</em> (salary + nonsalary outflow), <em>Capital</em> (equipment/renovation, ≥1-yr life over a dollar threshold), <em>Operating</em> (annual revenues vs. expenses for the fiscal year)."},
+  {d:"bm",s:"Financial Management",q:"Fixed vs. variable costs",a:"<em>Fixed</em> costs don't change with volume (rent, insurance, loan payments). <em>Variable</em> costs fluctuate with volume (payroll, supplies, census/acuity)."},
+  {d:"bm",s:"Financial Management",q:"Variance analysis",a:"Investigates line items off-target beyond a threshold (positive or negative). Types: <em>volume</em> (patient-days), <em>efficiency</em> (HPPD — hours per patient day), <em>rate</em> (budgeted vs. paid hourly rate), <em>nonsalary</em> (supply/price/regulation)."},
+  {d:"bm",s:"Financial Management",q:"Break-even point & contribution margin",a:"<em>Contribution margin</em> = charge − actual cost. <em>Break-even</em> = fixed cost ÷ contribution margin. E.g., $30,000 fixed ÷ ($25−$10) = 2,000 procedures to break even."},
+  {d:"bm",s:"Financial Management",q:"Full-time equivalent (FTE)",a:"Hours a full-time employee is scheduled weekly: 1.0 FTE (full-time equivalent) = 40 hrs. 7-day, 8-hr coverage = 1.4 FTE (56÷40); 7-day, 12-hr coverage = 2.1 FTE (84÷40)."},
+  {d:"bm",s:"Financial Management",q:"Zero-based budgeting",a:"Starts at <em>zero</em> each year — every dollar must be justified; nothing carries over automatically. Used for a brand-new service, a major reimbursement paradigm shift, or as a check on the historical budget."},
+  {d:"bm",s:"Financial Management",q:"Fixed, flexible & program budgets",a:"<em>Fixed</em> = one annual volume ÷ 12, no seasonal adjustment. <em>Flexible</em> = adjusts for volume variation. <em>Program</em> = long-range (5–10 yr) planning prioritized by importance."},
+  {d:"bm",s:"Financial Management",q:"Cost-benefit analysis",a:"Examines scenarios to determine the relative value of an intervention against set criteria (e.g., home care vs. skilled-nursing facility). Cost–benefit ratio >1 means benefits outweigh costs."},
+  {d:"bm",s:"Financial Management",q:"Productivity measures (nursing)",a:"<em>Industrial model</em> = output ÷ input (efficiency). <em>Systems framework</em> adds effectiveness/quality. Measures: HPPD (hours per patient day), salary cost/patient-day, and utilization rate (required ÷ paid hours)."},
+  {d:"bm",s:"Financial Management",q:"Cost containment via staffing/RIF (reduction in force)",a:"Controlling <em>variable</em> expenses (especially payroll) is a manager's biggest lever. Reduction-in-force, outsourcing, and temporary agencies cut costs — but savings may not be sustained and can carry hidden costs."},
+  {d:"bm",s:"Financial Management",q:"Marketing — the four P's",a:"<em>Product, Price, Place, Promotion.</em> Customer orientation identifies consumer wants/needs. <em>Market share</em> = % of total market captured; <em>market penetration</em> = exposure to potential buyers; <em>market mix</em> = the blend of tools used."},
+
+  // Staffing fundamentals
+  {d:"bm",s:"Staffing Fundamentals",q:"Staff mix",a:"The pattern of staff categories (RN [registered nurse] / LPN [licensed practical nurse]-LVN [licensed vocational nurse] / unlicensed assistive personnel) assigned to a client group — weighted more or less toward RNs depending on the institution's philosophy and acuity."},
+  {d:"bm",s:"Staffing Fundamentals",q:"Hours per patient day (HPPD)",a:"Hours of nursing care per patient per day = total nursing production hours ÷ number of patient-days. A core efficiency metric and an efficiency-variance driver."},
+  {d:"bm",s:"Staffing Fundamentals",q:"Patient classification / acuity systems",a:"Assign clients to categories by care intensity (Level I least intense → Level IV most intense) to drive staffing. Tools must be valid and reliable; most acuity systems are automated."},
+  {d:"bm",s:"Staffing Fundamentals",q:"Staffing ratios",a:"Minimum nurse-to-patient ratios may be set by legislation (e.g., California's mandated ratios). Critics note ratios alone don't ensure safety — acuity and staff competence also matter."},
+  {d:"bm",s:"Staffing Fundamentals",q:"Position control & staffing distribution",a:"<em>Position control plan</em> determines how many FTEs (full-time equivalent) are needed to deliver required care. <em>Staffing distribution</em> allocates personnel by shift (e.g., 45% day, 35% evening, 20% night)."},
+  {d:"bm",s:"Staffing Fundamentals",q:"Cost-effective staffing decisions",a:"When covering a high-acuity unit short a licensed nurse, the safest and most cost-effective move is usually to <em>reassign a like-licensed staffer from a low-census, low-acuity unit</em> before paying agency premiums."},
+
+  /* ============ HEALTH CARE DELIVERY ============ */
+
+  // Ethics & Code of Ethics
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"ANA (American Nurses Association) Code of Ethics for Nurses",a:"The profession's guide to ethical obligations (2015, with interpretive statements). Compels practice 'with compassion and respect for the inherent dignity, worth, and uniqueness of every individual.'"},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"Deontology vs. teleology",a:"<em>Deontology</em> = rule-based; an act is good in itself regardless of consequences. <em>Teleology</em> = the end/purpose determines rightness — <em>utilitarianism</em> is its prime example."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"Utilitarianism",a:"The greatest good for the greatest number; the consequence of an act matters more than the act itself. E.g., declining one costly transplant to fund many better birth outcomes."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"Rawlsian justice",a:"John Rawls's theory of justice centers on concern for the <em>least advantaged</em> — fairness toward those worst off in society."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"Four ethical principles",a:"<em>Respect for persons</em> (autonomy, veracity, confidentiality, informed consent), <em>Beneficence</em> (do no harm + promote good), <em>Justice</em> (fairness/desert), and the balance among them in dilemmas."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"Ethical dilemma & the 'ethics work-up'",a:"A dilemma = competing values with a vested community interest. The Univ. of Washington work-up reviews medical indications, client preferences, quality of life, and contextual issues, then asks what is at issue and where the conflict lies."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"Advocacy & refusal of assignment",a:"Nurses advocate for patients who cannot speak for themselves. Staff may <em>refuse an assignment</em> based on deeply held beliefs (e.g., pregnancy termination, withdrawal of life support)."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"Hallmarks of a profession",a:"Extended education / body of knowledge; defined skills & norms; provision of a needed service; <em>autonomy</em> in practice; and a governing <em>code of ethics</em>. Integrity = strict adherence to a code above reproach."},
+
+  // Regulatory & compliance
+  {d:"hcd",s:"Regulatory & Compliance",q:"HIPAA (Health Insurance Portability and Accountability Act) (1996)",a:"Protects the privacy/security of personally identifiable health information and standardizes electronic data exchange. Information may not be released to anyone not directly involved in care without permission; violations carry civil and criminal penalties."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"EMTALA (Emergency Medical Treatment and Active Labor Act)",a:"Emergency Medical Treatment and Active Labor Act — a corporate responsibility requiring an appropriate medical <em>screening exam</em> and <em>stabilization</em> regardless of ability to pay before transfer."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Negligence vs. malpractice",a:"<em>Negligence</em> = failure to exercise reasonable care (omission or commission). <em>Malpractice</em> = professional negligence — conduct below the professional standard of care."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Four elements of malpractice",a:"<em>Duty → Breach of duty → Causation</em> (proximate cause) <em>→ Injury.</em> All four must be proven, or the claim may be dismissed."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Tort",a:"A civil <em>wrongful act</em> (other than breach of contract) allowing the injured to seek damages; includes negligence, assault/battery, and libel/slander."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Respondeat superior",a:"'Let the master speak' — vicarious liability holding employers responsible for employees' actions in the course of work. The nurse may still be personally sued."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"COBRA (Consolidated Omnibus Budget Reconciliation Act) (1986)",a:"Lets certain former employees/dependents continue group health coverage at group rates after a qualifying event (e.g., termination not for gross misconduct, reduced hours, divorce, death). Applies to employers with 20+ employees."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Advance directives & the PSDA (Patient Self-Determination Act) (1990)",a:"The Patient Self-Determination Act requires that patients be told of their right to accept/refuse treatment and to make advance directives (living will, durable power of attorney) — a direct result of the <em>Cruzan</em> decision."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Patient Bill of Rights",a:"Issued by the AHA (American Hospital Association) (1973): rights to respectful care, complete information, informed consent, refusal of treatment, privacy/confidentiality, continuity of care, and explanation of the bill."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Landmark end-of-life cases",a:"<em>Quinlan</em> (ventilator withdrawal; right to privacy; bioethics committees), <em>Jobes</em> & <em>Cruzan</em> (artificial tube feeding can be withdrawn; Cruzan → PSDA [Patient Self-Determination Act]), <em>Schiavo</em> (ties law, ethics, and morals; spouse as decision-maker)."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Implied consent",a:"Consent assumed when a patient cannot consent and emergency treatment is needed — e.g., a person brought to the ED (emergency department) in cardiac arrest is presumed to consent to resuscitation."},
+
+  // Nursing theory & care models
+  {d:"hcd",s:"Nursing Theory & Care Models",q:"The nursing metaparadigm",a:"<em>Nurse, Person, Environment, Health.</em>"},
+  {d:"hcd",s:"Nursing Theory & Care Models",q:"The nursing process",a:"<em>Assessment, Planning, Intervention, Evaluation</em> — the scientific model underlying modern management as well."},
+  {d:"hcd",s:"Nursing Theory & Care Models",q:"Three types of nursing theory",a:"<em>Conceptual models</em> & <em>grand theories</em> (broad/abstract, hard to apply) and <em>middle-range theories</em> (grounded, practice-applicable — favored by Magnet organizations)."},
+  {d:"hcd",s:"Nursing Theory & Care Models",q:"Nightingale & Peplau",a:"<em>Nightingale:</em> environmental theory (air, light, cleanliness) + applied statistics. <em>Peplau:</em> interpersonal nurse–client phases — Orientation, Identification, Explanation, Resolution."},
+  {d:"hcd",s:"Nursing Theory & Care Models",q:"Orem, Roy & Neuman",a:"<em>Orem:</em> self-care — nurse acts when the client cannot meet own needs. <em>Roy:</em> adaptation model. <em>Neuman:</em> open-systems model with intra/inter/extrapersonal stressors and 3 prevention levels."},
+  {d:"hcd",s:"Nursing Theory & Care Models",q:"Leininger, Watson & Henderson",a:"<em>Leininger:</em> transcultural caring. <em>Watson:</em> caring science. <em>Henderson:</em> assists toward independence (14 needs; substitutive/supplementary/complementary roles)."},
+  {d:"hcd",s:"Nursing Theory & Care Models",q:"Synergy Model (AACN — American Association of Critical-Care Nurses)",a:"Client needs at the core matched to nurse <em>competencies</em>; the ideal outcome is the client moving safely through the system."},
+  {d:"hcd",s:"Nursing Theory & Care Models",q:"Care delivery models",a:"<em>Primary</em> (one RN [registered nurse] accountable for a client), <em>Team</em> (RN leader directs RN/LPN [licensed practical nurse]/aides), <em>Functional</em> (tasks divided by function), and <em>Case management</em> (continuum of care: prehospital, intrahospital, postdischarge — Karen Zander)."},
+
+  // Technology & informatics
+  {d:"hcd",s:"Technology & Informatics",q:"EHR (electronic health record) maturity levels",a:"1 Automated medical record → 2 Computerized record → 3 <em>Electronic medical record</em> (first with electronic data entry, signature, and audit tools) → 4 Electronic client record (multi-org) → 5 Electronic health record (whole-person)."},
+  {d:"hcd",s:"Technology & Informatics",q:"Telehealth vs. telehomecare",a:"<em>Telehealth</em> = real-time provider–client interaction unconstrained by distance. <em>Telehomecare</em> = home monitoring via devices (pill dispensers, biometric garments, remote monitors)."},
+  {d:"hcd",s:"Technology & Informatics",q:"Predictive analytics & remote monitoring",a:"<em>Predictive analytics</em> uses data/algorithms to anticipate deterioration, demand, or risk. <em>Remote monitoring</em> tracks patients outside the facility, enabling earlier intervention and reduced readmissions."},
+  {d:"hcd",s:"Technology & Informatics",q:"Virtual nursing",a:"An experienced RN (registered nurse) delivers care remotely (admission/discharge teaching, documentation, monitoring, mentoring bedside staff) via audio-video — extending capacity and supporting workforce shortages."},
+  {d:"hcd",s:"Technology & Informatics",q:"Meaningful Use",a:"CMS (Centers for Medicare and Medicaid Services) goals: improve quality, safety, and efficiency; engage patients/families; improve coordination and population health; and ensure privacy/security — with defined core measures and reporting."},
+
+  // Person-centered care
+  {d:"hcd",s:"Person-Centered Care",q:"Leader rounding",a:"Leaders intentionally round on patients and staff to build trust, surface concerns early, recognize good work, and validate that care standards are met — a person-centered engagement practice."},
+  {d:"hcd",s:"Person-Centered Care",q:"Service recovery",a:"When a complaint arises: begin with a <em>sincere apology</em>, let the customer explain in their own words, <em>fix the problem</em>, follow up afterward, then <em>document</em> and track to identify trends for improvement."},
+  {d:"hcd",s:"Person-Centered Care",q:"Patient engagement",a:"Partnering with patients and families in decisions and care design (shared decision-making, informed consent, transparency). A central driver of experience scores and outcomes."},
+
+  // Care delivery evaluation
+  {d:"hcd",s:"Care Delivery Evaluation",q:"Nurse-sensitive indicators & NDNQI (National Database of Nursing Quality Indicators)",a:"The National Database of Nursing Quality Indicators (ANA — American Nurses Association) collects nursing-sensitive indicators (falls, pressure injuries, CLABSI [central line-associated bloodstream infection], etc.) and nurse-satisfaction data to link nursing to client outcomes."},
+  {d:"hcd",s:"Care Delivery Evaluation",q:"HCAHPS (Hospital Consumer Assessment of Healthcare Providers and Systems)",a:"The first national, standardized, publicly reported survey of patients' perceptions of hospital care. Tied to reimbursement — a meaningful share of the DRG (diagnosis-related group) payment reflects the patient experience."},
+  {d:"hcd",s:"Care Delivery Evaluation",q:"Core measures & care coordination",a:"<em>Core measures</em> are standardized, evidence-based process metrics for common conditions. <em>Care coordination</em> aligns providers and settings to reduce gaps, duplication, and readmissions."},
+  {d:"hcd",s:"Care Delivery Evaluation",q:"Magnet Recognition Program",a:"ANCC (American Nurses Credentialing Center) program honoring sustained nursing excellence; grounded in <em>transformational leadership</em> and shared governance. Magnet facilities favor nurse-driven policy and shared decision-making."},
+
+  // SDOH & equity
+  {d:"hcd",s:"Social Determinants & Equity",q:"Social determinants of health (SDOH)",a:"The conditions in which people are born, live, work, and age — economic stability, education, healthcare access, neighborhood/environment, and social context — that shape health outcomes."},
+  {d:"hcd",s:"Social Determinants & Equity",q:"Health equity vs. health disparities",a:"<em>Health equity</em> = everyone has a fair, just opportunity to be as healthy as possible. <em>Health disparities</em> = preventable differences in health burden across population groups."},
+  {d:"hcd",s:"Social Determinants & Equity",q:"Healthy People 2020/2030",a:"The U.S. prevention agenda (Office of Disease Prevention and Health Promotion, within the U.S. Department of Health and Human Services): increase life expectancy and quality of life, and <em>eliminate health disparities</em> among population segments."},
+
+  // Emergency & disaster preparedness
+  {d:"hcd",s:"Emergency & Disaster Prep",q:"Four phases of emergency management",a:"<em>Mitigation, Preparedness, Response, Recovery</em> — the cycle organizations use to plan for and manage disasters and mass-casualty events."},
+  {d:"hcd",s:"Emergency & Disaster Prep",q:"Crisis management objectives",a:"(1) Reduce tension during the incident, (2) demonstrate organizational commitment/expertise, (3) control the flow and accuracy of information, (4) manage resources effectively."},
+  {d:"hcd",s:"Emergency & Disaster Prep",q:"Surge capacity",a:"The ability to rapidly expand beyond normal services (staff, space, supplies, systems) to meet a sudden increase in demand during a disaster or pandemic."},
+
+  // Leadership scope, standards & systems
+  {d:"hcd",s:"Leadership Scope & Systems",q:"ANA (American Nurses Association) Nursing Administration Scope & Standards",a:"Defines the nurse leader's scope of practice and standards of professional performance — guiding competencies, accountability, ethics, and the evaluation of leadership roles."},
+  {d:"hcd",s:"Leadership Scope & Systems",q:"Open vs. closed systems",a:"<em>Closed</em> systems exist mainly in physical science. <em>Open</em> systems interact with their environment — health care is a complex sociotechnical open system (payors, regulators, staff, clients)."},
+  {d:"hcd",s:"Leadership Scope & Systems",q:"Input–Throughput–Output",a:"<em>Input</em> = staff, clients, resources. <em>Throughput</em> = the process. <em>Output</em> = the product (restored health, education, research)."},
+  {d:"hcd",s:"Leadership Scope & Systems",q:"Mission vs. vision & SWOT (Strengths, Weaknesses, Opportunities, Threats)",a:"<em>Mission</em> = reason for existence (purpose); <em>vision</em> = aspiration. Both precede goals & strategy. <em>SWOT</em> = Strengths, Weaknesses, Opportunities, Threats — core to strategic planning."},
+  {d:"hcd",s:"Leadership Scope & Systems",q:"Strategic vs. contingency planning",a:"<em>Strategic</em> = long-term, future-oriented objectives. <em>Contingency</em> = proactive planning for unexpected occurrences. <em>Scenario development</em> models possible futures to offset over/under-prediction."},
+  {d:"hcd",s:"Leadership Scope & Systems",q:"Shared governance & spheres of influence",a:"Shared governance formally involves those who do the work in decisions (a Magnet principle). Nurse leaders exert policy influence across four spheres: <em>workplace, professional organization, community, and government</em>."}
+];
+
+/* ---- QUIZ QUESTIONS: {d, s, q, o:[opts], c:correctIndex, r:rationale} ---- */
+const QUESTIONS = [
+
+  /* ===== HUMAN RESOURCE MANAGEMENT ===== */
+  {d:"hr",s:"Leadership Styles",q:"A nurse manager who normally uses a democratic style takes direct, unilateral control during a code. This adaptability best reflects which theory?",
+   o:["Trait theory","Contingency (situational) leadership","Transactional leadership","Bureaucratic leadership"],c:1,
+   r:"Contingency theory holds that no single style works in every situation; the effective leader matches style to circumstance — democratic in stability, autocratic in an emergency."},
+  {d:"hr",s:"Leadership Styles",q:"A staff nurse is highly skilled but unwilling and insecure about a new responsibility. Using Hersey & Blanchard, which readiness level and best-fit style apply?",
+   o:["R1 — Telling (S1)","R2 — Selling (S2)","R3 — Participating (S3)","R4 — Delegating (S4)"],c:2,
+   r:"'Able but unwilling/insecure' = R3, best matched with S3 Participating (low task / high relationship), where leader and follower share decisions to build confidence."},
+  {d:"hr",s:"Leadership Styles",q:"The ANCC (American Nurses Credentialing Center) Magnet Recognition Program is grounded in which leadership theory?",
+   o:["Transactional leadership","Charismatic leadership","Transformational leadership","Trait theory"],c:2,
+   r:"Magnet is based on transformational leadership — transforming the organization through vision, culture, and empowerment; shared governance is also a key Magnet principle."},
+  {d:"hr",s:"Leadership Styles",q:"Autocratic and bureaucratic leaders assume that subordinates are motivated by:",
+   o:["An internal locus of control","A complex matrix of variables","External sources","Socialization over time"],c:2,
+   r:"Autocratic and bureaucratic leaders assume external motivators change behavior. Democratic and laissez-faire leaders believe behavior change is internally inspired (internal locus of control)."},
+  {d:"hr",s:"Communication",q:"A nurse says, 'I feel frustrated when reports are late,' rather than 'You always turn in late reports.' This is:",
+   o:["Aggressive communication","Passive-aggressive communication","Assertive communication","Bureaucratic communication"],c:2,
+   r:"Assertive communication uses 'I' statements about oneself, avoiding the blame that 'you' statements (aggressive) place on others."},
+  {d:"hr",s:"Communication",q:"One of the best ways to develop your communication skills is to:",
+   o:["Sign up for many speaking engagements","Develop your listening skills","Be more aggressive in your style","Take a public-speaking course"],c:1,
+   r:"The most significant communication problem is poor listening. Covey lists empathetic listening ('seek first to understand') as a core habit."},
+  {d:"hr",s:"Communication",q:"Which is true of nonverbal communication?",
+   o:["It is consistent across cultures","It should be minimized to avoid confusion","It can be eliminated in face-to-face encounters","It is given more credence than verbal when the two are inconsistent"],c:3,
+   r:"Nonverbal messages differ across cultures and cannot be eliminated face-to-face. When verbal and nonverbal conflict, the nonverbal message is generally believed."},
+  {d:"hr",s:"Management Foundations",q:"An organization assigns employees two reporting lines (functional manager + product-line manager). This inherently challenges which principle?",
+   o:["Span of control","Unity of command","Chain of command","Centralization"],c:1,
+   r:"A matrix structure assigns more than one boss, violating unity of command (each subordinate accountable to only one superior). It demands exceptional communication."},
+  {d:"hr",s:"Management Foundations",q:"Employees report dissatisfaction with company policy and working conditions. According to Herzberg, these are:",
+   o:["Motivators","Hygiene factors","Self-actualization needs","Esteem factors"],c:1,
+   r:"Policy, pay, supervision, and conditions are hygiene factors — their absence causes dissatisfaction, but improving them does not motivate. Motivators include achievement, recognition, growth, and responsibility."},
+  {d:"hr",s:"Cultural Humility (Diversity, Equity, Inclusion, Belonging)",q:"A nurse leader frames staff diversity in culture, background, race, and gender as a way to improve quality and problem-solving. This best reflects:",
+   o:["Tokenism","Leveraging diversity","Bona fide occupational qualification","Disparate impact"],c:1,
+   r:"Leveraging diversity treats varied perspectives as intellectual capital that enriches problem-solving and decision-making in an inclusive environment."},
+  {d:"hr",s:"Federal Employment Laws",q:"A qualified applicant who uses a wheelchair requests a workstation modification. The employer must accommodate unless it causes:",
+   o:["A bona fide occupational qualification","Undue hardship","Quid pro quo","Vicarious liability"],c:1,
+   r:"Under the ADA (Americans with Disabilities Act)/Rehabilitation Act, employers must provide reasonable accommodation unless it imposes undue hardship on operations."},
+  {d:"hr",s:"Federal Employment Laws",q:"Title VII of the Civil Rights Act of 1964 prohibits employment discrimination based on:",
+   o:["Age and disability","Race, color, religion, sex, or national origin","Veteran status only","Genetic information only"],c:1,
+   r:"Title VII prohibits discrimination based on race, color, religion, sex, or national origin (age is covered by the ADEA [Age Discrimination in Employment Act]; disability by the ADA [Americans with Disabilities Act])."},
+  {d:"hr",s:"Federal Employment Laws",q:"An employee is told a promotion depends on accepting a supervisor's sexual advances. This is:",
+   o:["Hostile work environment","Quid pro quo","Retaliation","Disparate impact"],c:1,
+   r:"Quid pro quo harassment conditions a work benefit on submission to sexual demands. A hostile environment involves pervasive unwelcome conduct that alters the workplace."},
+  {d:"hr",s:"Federal Employment Laws",q:"An employee wishing to report age discrimination would contact which agency?",
+   o:["The U.S. Department of Health and Human Services","The Equal Employment Opportunity Commission (EEOC)","OSHA (Occupational Safety and Health Administration)","The Labor Board"],c:1,
+   r:"The EEOC (Equal Employment Opportunity Commission) enforces the ADEA (Age Discrimination in Employment Act) (age discrimination) as well as Title VII, the ADA (Americans with Disabilities Act), and the Equal Pay Act."},
+  {d:"hr",s:"Human Capital & Performance",q:"A nurse preceptor folds her arms and rolls her eyes when a new orientee asks a clinical question. This is best described as:",
+   o:["Nurse bullying (lateral violence)","Sexual harassment","Discrimination","A normal response"],c:0,
+   r:"Dismissive, hostile peer behavior toward a colleague is lateral violence (nurse bullying), which can ultimately harm patient outcomes."},
+  {d:"hr",s:"Human Capital & Performance",q:"A health care provider is granted authority to provide patient care after the governing body reviews education, training, and licensure. This process is:",
+   o:["Privileging","Credentialing","Certification","Licensure"],c:1,
+   r:"Credentialing grants authority to provide care after review of education/licensure. Privileging grants permission for specific care; certification is validation by a nongovernmental body."},
+
+  // ---- Federal Employment Laws ----
+  {d:"hr",s:"Federal Employment Laws",q:"A staff nurse who has worked full time for 18 months requests leave for the birth of a child; the facility employs 60 nurses. Under the FMLA (Family and Medical Leave Act), she is entitled to:",
+   o:["6 weeks of paid leave","12 weeks of unpaid, job-protected leave","26 weeks of unpaid leave","4 months of paid leave"],c:1,
+   r:"The FMLA (Family and Medical Leave Act) provides eligible employees up to 12 weeks of unpaid, job-protected leave per year. Eligibility requires 12 months of employment, 1,250 hours worked in the prior year, and an employer with 50 or more employees within 75 miles."},
+  {d:"hr",s:"Federal Employment Laws",q:"Which federal law governs minimum wage, overtime pay, and the classification of employees as exempt or nonexempt?",
+   o:["National Labor Relations Act","Fair Labor Standards Act","Family and Medical Leave Act","Occupational Safety and Health Act"],c:1,
+   r:"The FLSA (Fair Labor Standards Act) sets minimum wage, overtime (time-and-a-half beyond 40 hours per week for nonexempt staff), and exempt versus nonexempt classification."},
+  {d:"hr",s:"Federal Employment Laws",q:"Nurses on a unit want to discuss forming a collective bargaining unit. Which law protects their right to organize?",
+   o:["Title VII of the Civil Rights Act","National Labor Relations Act","Americans with Disabilities Act","Equal Pay Act"],c:1,
+   r:"The NLRA (National Labor Relations Act) protects employees' rights to organize, bargain collectively, and engage in concerted activity; it is enforced by the NLRB (National Labor Relations Board)."},
+  {d:"hr",s:"Federal Employment Laws",q:"A 58-year-old qualified applicant is passed over for a younger, less-qualified candidate. Which law most directly applies?",
+   o:["The ADA (Americans with Disabilities Act)","The ADEA (Age Discrimination in Employment Act)","The FMLA (Family and Medical Leave Act)","The FLSA (Fair Labor Standards Act)"],c:1,
+   r:"The ADEA (Age Discrimination in Employment Act) protects workers age 40 and older from age-based employment discrimination."},
+  {d:"hr",s:"Federal Employment Laws",q:"An employee returning from National Guard deployment must be reemployed in the same or an equivalent position. This protection comes from:",
+   o:["USERRA (Uniformed Services Employment and Reemployment Rights Act)","The WARN Act","GINA (Genetic Information Nondiscrimination Act)","The FLSA (Fair Labor Standards Act)"],c:0,
+   r:"USERRA (Uniformed Services Employment and Reemployment Rights Act) protects the job rights of those who leave employment to perform military service, requiring reemployment and prohibiting related discrimination."},
+  {d:"hr",s:"Federal Employment Laws",q:"A manager wants to require a genetic test as a condition of hire. This is prohibited by:",
+   o:["GINA (Genetic Information Nondiscrimination Act)","HIPAA (Health Insurance Portability and Accountability Act)","The ADA (Americans with Disabilities Act)","Title VII"],c:0,
+   r:"GINA (Genetic Information Nondiscrimination Act) prohibits the use of genetic information in employment decisions and bars employers from requesting or requiring it."},
+
+  // ---- Leadership Styles ----
+  {d:"hr",s:"Leadership Styles",q:"A CNO (chief nursing officer) prioritizes removing barriers and developing staff, placing their growth before her own self-interest. This best reflects:",
+   o:["Autocratic leadership","Servant leadership","Transactional leadership","Bureaucratic leadership"],c:1,
+   r:"Servant leadership places the growth, needs, and well-being of staff first, with the leader acting as a steward who removes obstacles to their success."},
+  {d:"hr",s:"Leadership Styles",q:"A manager offers a bonus to nurses who pick up extra shifts and corrects those who miss targets. This contingent-reward approach is:",
+   o:["Transformational leadership","Transactional leadership","Servant leadership","Laissez-faire leadership"],c:1,
+   r:"Transactional leadership operates through social exchange — rewards for performance and correction for shortfalls — maintaining the status quo rather than transforming it."},
+  {d:"hr",s:"Leadership Styles",q:"A nurse leader gives an expert, self-directed research team broad autonomy and minimal oversight. This is appropriate because:",
+   o:["Laissez-faire works best when followers are highly competent and motivated","Autocratic control always yields the best outcomes","Bureaucratic rules guarantee quality","Expert teams still require constant direction"],c:0,
+   r:"A laissez-faire (hands-off) approach can be effective with mature, expert, self-motivated staff who are able to make sound decisions independently."},
+  {d:"hr",s:"Leadership Styles",q:"According to Goleman, which capability is the strongest single differentiator of effective leaders?",
+   o:["Technical clinical expertise","Emotional intelligence","Years of experience","Number of advanced degrees"],c:1,
+   r:"Goleman identified emotional intelligence — self-awareness, self-regulation, motivation, empathy, and social skill — as the differentiating competency of effective leaders."},
+
+  // ---- Communication ----
+  {d:"hr",s:"Communication",q:"A charge nurse hands off a deteriorating patient using Situation, Background, Assessment, Recommendation. This structured format is:",
+   o:["SWOT","SBAR (Situation, Background, Assessment, Recommendation)","PDSA (Plan-Do-Study-Act)","DMAIC (Define, Measure, Analyze, Improve, Control)"],c:1,
+   r:"SBAR (Situation, Background, Assessment, Recommendation) standardizes handoff communication, reducing omissions and improving patient safety during transitions of care."},
+  {d:"hr",s:"Communication",q:"Information moving from frontline nurses up to the CNO (chief nursing officer) is most prone to:",
+   o:["Being unfiltered and complete","Being filtered or softened as it rises","Bypassing the chain of command","Moving faster than downward communication"],c:1,
+   r:"Upward communication is frequently filtered — subordinates tend to soften or omit unfavorable information — which is why leaders deliberately cultivate trust and direct feedback channels."},
+  {d:"hr",s:"Communication",q:"Two experienced nurses are in open conflict over assignments, disrupting the unit. Using a collaborating approach, the manager should:",
+   o:["Impose a solution to end it quickly","Avoid the issue until it resolves itself","Facilitate a discussion to find a solution meeting both nurses' core needs","Have each nurse submit a written complaint"],c:2,
+   r:"Collaborating (Thomas-Kilmann) is the win-win mode: it works to satisfy the underlying concerns of both parties, producing durable resolution when both the relationship and the issue matter."},
+
+  // ---- Cultural Humility ----
+  {d:"hr",s:"Cultural Humility (Diversity, Equity, Inclusion, Belonging)",q:"What best distinguishes cultural humility from cultural competence?",
+   o:["It is a fixed skill set that can be fully mastered","It is a lifelong, self-reflective process of learning from others","It applies only to language interpretation","It requires staff to adopt the patient's beliefs"],c:1,
+   r:"Cultural humility is a lifelong commitment to self-reflection and learning from others' cultures, in contrast to the idea that one can fully master competence in another culture."},
+  {d:"hr",s:"Cultural Humility (Diversity, Equity, Inclusion, Belonging)",q:"A patient with limited English proficiency needs informed consent explained. The most appropriate action is to:",
+   o:["Ask the patient's adult child to interpret","Use a qualified medical interpreter","Proceed using gestures and simple words","Delay until an English-speaking relative arrives"],c:1,
+   r:"A qualified medical interpreter ensures accurate, unbiased communication and valid informed consent; using family members risks translation errors, privacy breaches, and conflicts of interest."},
+
+  // ---- Management Foundations ----
+  {d:"hr",s:"Management Foundations",q:"Staff cannot focus on professional growth while worried about an unsafe parking lot at night. Applying Maslow, the leader should FIRST address:",
+   o:["Self-actualization through education","Safety and security needs","Esteem through recognition","Belonging through team events"],c:1,
+   r:"Maslow's hierarchy requires that lower-level needs be met first; safety and security must be satisfied before staff can meaningfully pursue esteem and self-actualization."},
+  {d:"hr",s:"Management Foundations",q:"A new manager directly supervises 45 nurses across three shifts and cannot give each adequate attention. This is a problem with:",
+   o:["Unity of command","Span of control","Chain of command","Centralization"],c:1,
+   r:"Span of control is the number of people or units a manager can effectively oversee; too wide a span dilutes attention, support, and supervision."},
+  {d:"hr",s:"Management Foundations",q:"Before delegating a task to a UAP (unlicensed assistive personnel), the RN confirms the right task, circumstance, person, direction, and supervision. These are the:",
+   o:["Five rights of delegation","Six Sigma principles","Five whys","Four phases of teamwork"],c:0,
+   r:"The Five Rights of Delegation (right task, right circumstance, right person, right direction/communication, right supervision) guide safe, accountable delegation by the RN."},
+
+  // ---- Human Capital & Performance ----
+  {d:"hr",s:"Human Capital & Performance",q:"An organization gathers performance feedback on a manager from peers, direct reports, and supervisors. This method is:",
+   o:["A halo evaluation","360-degree feedback","Forced-distribution ranking","A self-appraisal"],c:1,
+   r:"360-degree feedback collects performance input from multiple sources — peers, subordinates, supervisors, and self — producing a fuller and less biased picture than a single-rater appraisal."},
+  {d:"hr",s:"Human Capital & Performance",q:"During orientation, a preceptor observes a new nurse safely perform a sterile dressing change against a checklist before independent practice. This is:",
+   o:["Performance appraisal","Competency validation","Peer review","Progressive discipline"],c:1,
+   r:"Competency validation confirms that a nurse can safely perform a specific skill — often via direct observation against defined criteria — before practicing independently."},
+  {d:"hr",s:"Human Capital & Performance",q:"First-year RN turnover is high and costly. The intervention with the strongest evidence for improving new-graduate retention is:",
+   o:["A sign-on bonus","A structured nurse residency program","A mandatory-overtime cap","An annual engagement survey"],c:1,
+   r:"Accredited nurse residency and transition-to-practice programs consistently reduce first-year turnover while building the competence and confidence of new graduates."},
+  {d:"hr",s:"Human Capital & Performance",q:"A high-performing nurse is repeatedly late. Following progressive discipline, the FIRST step is typically:",
+   o:["Written warning","Verbal counseling and coaching","Suspension","Termination"],c:1,
+   r:"Progressive discipline generally escalates from verbal counseling/coaching, to written warning, to suspension, to termination, giving the employee genuine opportunity to correct the behavior."},
+  {d:"hr",s:"Human Capital & Performance",q:"A newly formed committee is marked by conflict and jockeying for influence. In Tuckman's model this stage is:",
+   o:["Forming","Storming","Norming","Performing"],c:1,
+   r:"Tuckman's stages are forming, storming, norming, performing, and adjourning. Storming is the conflict phase in which members vie for position before norms settle."},
+  {d:"hr",s:"Human Capital & Performance",q:"Which factor is most strongly associated with nurse engagement and intent to stay?",
+   o:["Free parking","Authentic, supportive nurse leadership and meaningful recognition","A larger cafeteria","Quarterly newsletters"],c:1,
+   r:"Engagement research links supportive, visible leadership, meaningful recognition, and a healthy work environment to retention far more strongly than transactional perks."},
+
+  /* ===== QUALITY AND SAFETY ===== */
+  {d:"qs",s:"Change Management",q:"A CNO (chief nursing officer) wants to disrupt the status quo, implement a staffing change, then embed it permanently. Which model's stages match?",
+   o:["Rogers' diffusion of innovation","Lewin's unfreezing–movement–refreezing","Tuckman's group stages","Appreciative inquiry's 4 Ds"],c:1,
+   r:"Lewin's change model = Unfreezing (disrupt equilibrium), Movement (plan and implement), Refreezing (integrate and sustain)."},
+  {d:"qs",s:"Change Management",q:"Which stage of Lewin's change model involves the organization sensing a need for change?",
+   o:["Freezing","Refreezing","Unfreezing","Change agent"],c:2,
+   r:"Unfreezing is the first stage, when the organization senses the need for change and the existing equilibrium is disrupted."},
+  {d:"qs",s:"Change Management",q:"A manager wants staff to adopt restraint-free care but they resist. The most effective way to facilitate the change is to:",
+   o:["Tell staff their practices are outdated and a legal liability","Order charge nurses to comply","Involve staff in gathering data comparing current outcomes to restraint-free outcomes","Write a new policy over the weekend and distribute it Monday"],c:2,
+   r:"The most effective application of change theory is to involve staff in the process. Mandates without buy-in increase resistance and undermine the leader."},
+  {d:"qs",s:"Culture of Safety",q:"A nurse manager suspects lateral violence on her unit. The most appropriate FIRST step is to:",
+   o:["Suspend the accused nurses for harassment","Reassign all new nurses to different mentors","Clarify each nurse's orientation responsibilities","Interview the nurses to understand the scope and source of the problem"],c:3,
+   r:"The first step is to identify the scope and source. Immediate suspensions or random reassignments increase hostility and can damage positive mentoring relationships."},
+  {d:"qs",s:"Process Improvement",q:"A CQI (continuous quality improvement) team focuses on the 'vital few rather than the trivial many.' This applies:",
+   o:["The Pareto Principle","The PDSA (Plan-Do-Study-Act) cycle","Benchmarking","Force-field analysis"],c:0,
+   r:"The Pareto Principle directs improvement effort toward the vital few factors that account for most of the impact."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"On protecting human subjects, which statement is most accurate?",
+   o:["If paid, the subject must complete the study","The subject must write to the IRB (Institutional Review Board) to withdraw","The subject may withdraw at any time","The subject must finish because they consented"],c:2,
+   r:"Subjects may withdraw from a research study at any time without penalty."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"Which evidence level best corresponds to a rigorous controlled clinical trial?",
+   o:["Level I","Level II","Level III","Level IV"],c:0,
+   r:"A rigorous randomized controlled trial is Level I — the strongest level in evidence-rating scales."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"What is mandatory for a design to be a true experimental design?",
+   o:["A convenience sample","No control group","No experimental group","A random sample"],c:3,
+   r:"A true experimental design requires manipulation, a control and experimental group, and a random sample."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"In the question, 'Is nurse job performance affected by salary or perceived job autonomy?' the independent variable(s) are:",
+   o:["Job performance","Salary only","Perceived job autonomy only","Both salary and perceived job autonomy"],c:3,
+   r:"Salary and perceived job autonomy are the manipulated (independent) variables; job performance is the dependent/outcome variable."},
+  {d:"qs",s:"Research & Evidence-Based Practice",q:"The Framingham Heart Study and Nurses' Health Study, run for many years on the same subjects, are examples of:",
+   o:["Ethnography","Grounded theory","Longitudinal study","Single case study"],c:2,
+   r:"Longitudinal studies are conducted over a long period on the same subjects."},
+
+  // ---- Change Management ----
+  {d:"qs",s:"Change Management",q:"A CNO (chief nursing officer) launching a major EHR (electronic health record) change first builds a sense of urgency and forms a guiding coalition. These are early steps of which model?",
+   o:["Lewin's three-step model","Kotter's 8-step change model","PDSA (Plan-Do-Study-Act)","Six Sigma DMAIC (Define, Measure, Analyze, Improve, Control)"],c:1,
+   r:"Kotter's 8-step model begins with creating urgency and forming a powerful guiding coalition, then building and communicating a vision before empowering broad action."},
+  {d:"qs",s:"Change Management",q:"A few enthusiastic nurses adopt a new protocol immediately while a stubborn minority resist to the end. In Rogers' diffusion of innovation, these two groups are:",
+   o:["Innovators and early majority","Early adopters and laggards","Late majority and innovators","Early majority and late majority"],c:1,
+   r:"Rogers' adopter categories are innovators, early adopters, early majority, late majority, and laggards. The quickest enthusiasts are early adopters; the final holdouts are laggards."},
+  {d:"qs",s:"Change Management",q:"Before implementing a change, a leader maps the forces pushing for it against those resisting it, then works to weaken the barriers. This technique is:",
+   o:["Force-field analysis","Gap analysis","SWOT analysis","Pareto analysis"],c:0,
+   r:"Lewin's force-field analysis identifies driving and restraining forces; change succeeds best by strengthening drivers and, more effectively still, reducing the restraining forces."},
+
+  // ---- Culture of Safety ----
+  {d:"qs",s:"Culture of Safety",q:"Under a just culture, a nurse who makes an honest slip while correctly following procedure should be:",
+   o:["Disciplined to deter recurrence","Consoled and supported, with a system review","Suspended pending investigation","Reported to the licensing board"],c:1,
+   r:"Just culture distinguishes human error (console and fix the system), at-risk behavior (coach), and reckless behavior (discipline). Honest error warrants support and examination of system contributors, not punishment."},
+  {d:"qs",s:"Culture of Safety",q:"A hospital pursuing high reliability urges staff to report small problems and near misses before they cause harm. This reflects which HRO (high reliability organization) principle?",
+   o:["Reluctance to simplify","Preoccupation with failure","Deference to expertise","Commitment to resilience"],c:1,
+   r:"Preoccupation with failure means treating small signals and near misses as warnings, encouraging reporting so weak points are corrected before they cause harm."},
+  {d:"qs",s:"Culture of Safety",q:"A patient dies after a wrong-site surgery. The Joint Commission classifies this as a sentinel event, which prompts the organization to:",
+   o:["Conduct a root cause analysis and develop an action plan","Terminate the involved staff","Notify the media","Close the operating room permanently"],c:0,
+   r:"A sentinel event is an unexpected occurrence involving death or serious harm; The Joint Commission expects a thorough root cause analysis and a corrective action plan to prevent recurrence."},
+  {d:"qs",s:"Culture of Safety",q:"To sustain a culture of safety, the system for reporting errors and near misses should be:",
+   o:["Punitive, to ensure accountability","Nonpunitive and confidential, to encourage reporting","Limited to physicians","Used only for sentinel events"],c:1,
+   r:"A nonpunitive, confidential reporting environment increases both the volume and the honesty of reports, supplying the data needed to identify and correct latent system hazards."},
+  {d:"qs",s:"Culture of Safety",q:"A nurse executive addressing workplace violence should recognize that the MOST common source of violence against hospital nurses is:",
+   o:["Patients and visitors","Other nurses","Physicians","External intruders"],c:0,
+   r:"Type II violence — from patients and their visitors — accounts for the majority of assaults on health care workers, which is why prevention programs emphasize risk screening, de-escalation training, and reliable reporting."},
+
+  // ---- Process Improvement ----
+  {d:"qs",s:"Process Improvement",q:"A team uses Define, Measure, Analyze, Improve, Control to reduce variation in medication administration times. This methodology is:",
+   o:["Lean","Six Sigma DMAIC","PDSA (Plan-Do-Study-Act)","Benchmarking"],c:1,
+   r:"DMAIC (Define, Measure, Analyze, Improve, Control) is the core Six Sigma framework, aimed at reducing variation and defects in an existing process."},
+  {d:"qs",s:"Process Improvement",q:"Before launching a new chemotherapy process, a team proactively maps where it could fail and the effect of each potential failure. This tool is:",
+   o:["Root cause analysis (RCA)","Failure mode and effects analysis (FMEA)","Pareto chart","Control chart"],c:1,
+   r:"FMEA (failure mode and effects analysis) is a prospective, proactive tool that anticipates how a process could fail; RCA is retrospective, performed after an event has already occurred."},
+  {d:"qs",s:"Process Improvement",q:"A team eliminates unnecessary steps and wasted motion in a supply-retrieval process. This focus on removing waste to maximize value is characteristic of:",
+   o:["Lean","Benchmarking","Capitation","Force-field analysis"],c:0,
+   r:"Lean methodology identifies and eliminates waste — any step that consumes resources without adding value for the patient — to improve flow and efficiency."},
+
+  /* ===== BUSINESS MANAGEMENT ===== */
+  {d:"bm",s:"Patient Payor Mix",q:"Capitation is a payment method in which reimbursement is based on:",
+   o:["A per-diem rate paid to the practice","A per-member, per-month rate paid whether or not services are used","A rate per diagnosis based on documentation","The client paying 20% and the carrier the rest"],c:1,
+   r:"Capitation pays a fixed negotiated rate per member per month (PM/PM), shifting risk to the provider regardless of utilization."},
+  {d:"bm",s:"Patient Payor Mix",q:"Which system was adopted nationally by Medicare to reimburse acute-care services using a case rate?",
+   o:["Per-diem system","Capitation","RBRVS (Resource-Based Relative Value Scale)","DRG (diagnosis-related group) system"],c:3,
+   r:"The DRG (diagnosis-related group) system was adopted nationally by Medicare for acute-care reimbursement using a fixed case rate."},
+  {d:"bm",s:"Financial Compliance Laws",q:"A criminal law that prohibits offering or receiving anything of value to induce referrals of federally reimbursed services is the:",
+   o:["Stark Law","Anti-Kickback Statute","False Claims Act","Sherman Act"],c:1,
+   r:"The Anti-Kickback Statute is a criminal, intent-based law barring remuneration to induce referrals. (The Stark Law is a strict-liability civil self-referral law.)"},
+  {d:"bm",s:"Financial Management",q:"A computer is an example of which type of budget item?",
+   o:["Operational item","Capital equipment item","Real estate item","Fixed equipment item"],c:1,
+   r:"A computer is major movable equipment with a multi-year life span, so it is budgeted under the capital budget."},
+  {d:"bm",s:"Financial Management",q:"When is zero-based budgeting most appropriately used?",
+   o:["Projecting next year's capital expenditures","Projecting next year's staffing budget","Projecting expenses for increased volume","As a check and balance on the historical budget"],c:3,
+   r:"Zero-based budgets are used for a brand-new service, a major reimbursement paradigm shift, or as a check and balance on the organization's historical budget."},
+  {d:"bm",s:"Financial Management",q:"An operating statement shows the unit ran under budget overall, but patient-days and revenue were down while overtime was well above budget. The best feedback is:",
+   o:["'Congratulations on running under budget!'","'Use more contract employees.'","'What were your alternatives to using overtime?'","'How do you schedule vacation time?'"],c:2,
+   r:"With census and revenue down, overtime exceeding budget is a red flag worth questioning, despite the favorable aggregate variance."},
+  {d:"bm",s:"Staffing Fundamentals",q:"On a unit with 8 Level-IV and 10 Level-III clients, an LPN (licensed practical nurse) calls in sick. The safest, most cost-effective replacement is to:",
+   o:["Not replace the LPN (licensed practical nurse)","Reassign an LPN (licensed practical nurse) from a low-census, low-acuity unit","Obtain an LPN (licensed practical nurse) from a contract agency","Reassign a nursing assistant from a low-census unit"],c:1,
+   r:"Given the high-acuity census, reassigning a like-licensed LPN (licensed practical nurse) from a low-census, low-acuity unit is safest and avoids the premium cost of an agency nurse."},
+  {d:"bm",s:"Financial Management",q:"A manager must cut $20,000 in unit expenses. Which approach reflects a participative leadership style?",
+   o:["Let staff act without any direction or support","Inform staff of cuts and accept their ideas in writing","Tell staff the decision was already made by superiors","Discuss guidelines for the cuts and develop recommendations with those who participate"],c:3,
+   r:"Participative leadership engages staff in dialogue and shared development of recommendations, building ownership — unlike abdication, one-way information, or top-down dictation."},
+
+  // ---- Patient Payor Mix ----
+  {d:"bm",s:"Patient Payor Mix",q:"Under Medicare's Hospital Value-Based Purchasing program, a portion of a hospital's payment is determined by:",
+   o:["Volume of admissions only","Quality and outcome performance, not simply volume","The number of licensed beds","Length of stay alone"],c:1,
+   r:"Value-based purchasing ties part of reimbursement to quality, safety, patient experience, and outcomes — paying for value rather than sheer volume of services."},
+  {d:"bm",s:"Patient Payor Mix",q:"A hospital is penalized by CMS (Centers for Medicare & Medicaid Services) for excess 30-day readmissions. The best executive strategy to improve throughput and reduce penalties is to:",
+   o:["Discharge patients earlier regardless of readiness","Strengthen care coordination and transitions of care","Reduce nurse staffing to cut cost","Limit admissions from the emergency department"],c:1,
+   r:"Robust discharge planning, patient education, and care coordination across the continuum reduce avoidable readmissions while improving patient throughput."},
+  {d:"bm",s:"Patient Payor Mix",q:"Several providers form an organization that shares accountability for the cost and quality of a defined population and shares in the resulting savings. This is a(n):",
+   o:["Health maintenance organization (HMO)","Accountable care organization (ACO)","Preferred provider organization (PPO)","Independent practice association (IPA)"],c:1,
+   r:"An ACO (accountable care organization) is a group of providers jointly accountable for the quality and total cost of care for a population, sharing in the savings they generate."},
+
+  // ---- Financial Compliance Laws ----
+  {d:"bm",s:"Financial Compliance Laws",q:"A physician refers Medicare patients to an imaging center in which she holds a financial interest. Absent an exception, this most directly violates the:",
+   o:["Anti-Kickback Statute","Stark Law","EMTALA (Emergency Medical Treatment and Labor Act)","Sherman Antitrust Act"],c:1,
+   r:"The Stark Law is a strict-liability civil statute barring physician self-referral for designated health services to entities in which the physician has a financial interest, unless a defined exception applies."},
+  {d:"bm",s:"Financial Compliance Laws",q:"A nurse manager discovers the organization is billing Medicare for services never provided and reports it. Which law enables this whistleblower action?",
+   o:["The False Claims Act","HIPAA (Health Insurance Portability and Accountability Act)","The Stark Law","The FLSA (Fair Labor Standards Act)"],c:0,
+   r:"The False Claims Act prohibits knowingly submitting false claims to the government and includes qui tam provisions allowing whistleblowers to bring suit and share in any recovery."},
+
+  // ---- Financial Management ----
+  {d:"bm",s:"Financial Management",q:"A 30-bed unit running at 80% occupancy provides 600 nursing-care hours in 24 hours. Its HPPD (hours per patient day) is:",
+   o:["20","25","2.5","30"],c:1,
+   r:"HPPD (hours per patient day) = total nursing hours divided by patient days. With 24 patients (30 × 0.80) and 600 hours, 600 ÷ 24 = 25 HPPD."},
+  {d:"bm",s:"Financial Management",q:"As patient census rises, the cost of nursing supplies rises proportionally. These are best classified as:",
+   o:["Fixed costs","Variable costs","Indirect costs","Capital costs"],c:1,
+   r:"Variable costs change with volume, such as supplies consumed per patient. Fixed costs — rent, salaried management — remain constant regardless of census."},
+  {d:"bm",s:"Financial Management",q:"One full-time equivalent (FTE) is paid for 2,080 hours per year. Vacation, sick, and education time within that total are:",
+   o:["Productive hours","Nonproductive (benefit) hours","Capital hours","Variable hours"],c:1,
+   r:"Productive hours are worked hours of care; nonproductive (benefit) hours — vacation, sick, holiday, education — are paid but not worked, and must be accounted for in the staffing plan."},
+  {d:"bm",s:"Financial Management",q:"A nurse executive compares the projected cost of a safe-patient-handling program against expected savings from fewer staff injuries. This evaluation is a:",
+   o:["Cost-benefit analysis","Break-even census calculation","Case-mix index","Payor mix review"],c:0,
+   r:"Cost-benefit analysis weighs the total costs of an initiative against its quantifiable benefits, supporting a defensible business case for capital or program investment."},
+
+  // ---- Staffing Fundamentals ----
+  {d:"bm",s:"Staffing Fundamentals",q:"On a stable, low-acuity rehabilitation unit, the most cost-effective and appropriate skill mix would:",
+   o:["Use all RNs (registered nurses) for every task","Blend RNs with LPNs (licensed practical nurses) and UAP (unlicensed assistive personnel) matched to acuity","Use only agency staff","Eliminate RN oversight"],c:1,
+   r:"Skill mix should match patient acuity; a stable, low-acuity population can be safely and economically served by an RN-led blend of LPNs and UAP, reserving scarce RN time for assessment and clinical judgment."},
+  {d:"bm",s:"Staffing Fundamentals",q:"A nurse executive wants staffing to flex with real-time patient needs rather than fixed numbers. The best approach is:",
+   o:["A fixed ratio for every shift","Acuity-based (patient classification) staffing","Minimum staffing only","Mandatory overtime"],c:1,
+   r:"Acuity-based staffing uses a patient classification system to align nurse assignments with the intensity of patient needs, improving both safety and resource utilization."},
+  {d:"bm",s:"Staffing Fundamentals",q:"To cover unpredictable census spikes across several units at lower cost than agency staff, a nurse executive should develop a(n):",
+   o:["Mandatory overtime policy","Internal float pool or resource team","Permanent overstaffing model","Hiring freeze"],c:1,
+   r:"An internal float pool of cross-trained nurses flexibly covers fluctuating demand at lower cost and with better continuity and culture fit than premium-priced agency staffing."},
+
+  /* ===== HEALTH CARE DELIVERY ===== */
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"The ethical theory of utilitarianism is based on which principle?",
+   o:["Utmost rationality","Egoism","The greatest good for the greatest number","Scientism"],c:2,
+   r:"Utilitarianism (a teleological theory) holds that the greatest good for the greatest number is the desired end."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"Concern for the least advantaged is an underlying principle of which ethical theory?",
+   o:["Utilitarian","Deontological","Teleological","Rawlsian"],c:3,
+   r:"John Rawls's theory of justice centers on concern for the least advantaged."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Which law protects a client's information in their medical record?",
+   o:["Whistleblower Protection Act","Health Insurance Portability and Accountability Act","Fair Labor Standards Act","Title VII of the Civil Rights Act"],c:1,
+   r:"HIPAA (Health Insurance Portability and Accountability Act) protects health information by prohibiting release to anyone not directly involved in care without the patient's permission."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"For a malpractice claim to succeed, which set of elements must ALL be present?",
+   o:["Duty, breach, causation, injury","Negligence, omission, commission, harm","Assault, battery, libel, slander","Quid pro quo, hostile environment, retaliation, damages"],c:0,
+   r:"The four elements of malpractice are Duty, Breach of duty, Causation, and Injury. If any one cannot be proven, the claim may be dismissed."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Which legal concept holds an employer responsible for an employee's actions?",
+   o:["Res judicata","Respondeat superior","Stare decisis","Comparable worth"],c:1,
+   r:"Respondeat superior ('let the master speak') is vicarious liability holding employers responsible for employees' actions in the course of employment."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Which is the best example of implied consent?",
+   o:["A 45-year-old in full cardiac arrest brought to the ED (emergency department)","A 45-year-old scheduled for an elective hernia repair","An 18-year-old at a scheduled gynecologic exam","A competent 75-year-old scheduled for elective cataract surgery"],c:0,
+   r:"Implied consent applies when a person cannot consent and emergency care is needed — a patient in cardiac arrest is presumed to consent to resuscitation."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Which of the following is a wrongful act?",
+   o:["Contract","Tort","Broken contract","Consent"],c:1,
+   r:"A tort is a civil wrong other than a breach of contract for which the injured party may seek damages."},
+  {d:"hcd",s:"Nursing Theory & Care Models",q:"A nurse case manager visits the client prehospital, intrahospital, and postdischarge to ensure quality across the continuum. This best describes:",
+   o:["Utilization review","Case management","Instrument transport","Functional nursing"],c:1,
+   r:"Karen Zander described case management as care across a continuum — prehospital, intrahospital, and postdischarge."},
+  {d:"hcd",s:"Leadership Scope & Systems",q:"Which type of systems theory best describes business and health care organizations?",
+   o:["Circumscribed systems theory","Open systems theory","Closed systems theory","Differentiated systems theory"],c:1,
+   r:"Health care is an open system because it continuously interacts with its environment — payors, regulators, medical staff, and clients."},
+  {d:"hcd",s:"Care Delivery Evaluation",q:"Roughly 30% of a hospital's DRG (diagnosis-related group) reimbursement under Medicare is tied to the patient experience as measured by:",
+   o:["NDNQI (National Database of Nursing Quality Indicators)","HCAHPS (Hospital Consumer Assessment of Healthcare Providers and Systems)","HEDIS (Healthcare Effectiveness Data and Information Set)","PICOT (Population, Intervention, Comparison, Outcome, Time)"],c:1,
+   r:"HCAHPS (Hospital Consumer Assessment of Healthcare Providers and Systems) — the standardized, publicly reported survey of patients' perceptions of care — is tied to reimbursement, with non-participation reducing annual payment."},
+  {d:"hcd",s:"Care Delivery Evaluation",q:"Three major issues affect U.S. health care: quality, cost, and which of the following?",
+   o:["Insurance","Capitation","DRG (diagnosis-related group)","Access to care"],c:3,
+   r:"Quality, cost, and access to care are the three central issues; the ACA (Affordable Care Act) expanded access via insurance marketplaces and Medicaid."},
+  {d:"hcd",s:"Person-Centered Care",q:"When recovering from a service failure, the recommended FIRST step is to:",
+   o:["Document the issue for trending","Offer a sincere apology and ask for forgiveness","Escalate to risk management","Issue a refund or service credit"],c:1,
+   r:"Service recovery begins with a sincere apology, then letting the customer explain, fixing the problem, following up, and finally documenting and trending the issue."},
+
+  // ---- Ethics & Code of Ethics ----
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"A competent adult refuses a recommended blood transfusion for religious reasons. Honoring that refusal upholds which ethical principle?",
+   o:["Beneficence","Autonomy","Nonmaleficence","Justice"],c:1,
+   r:"Autonomy is the right of a competent person to self-determination. The nurse leader supports an informed refusal even when the care team disagrees with the choice."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"The principle expressed as 'above all, do no harm' is:",
+   o:["Beneficence","Nonmaleficence","Fidelity","Veracity"],c:1,
+   r:"Nonmaleficence is the duty to avoid causing harm. Beneficence is the related but distinct duty to actively do good and promote the patient's welfare."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"A nurse leader allocates scarce ICU (intensive care unit) beds using objective, consistently applied criteria. This best reflects:",
+   o:["Justice","Veracity","Fidelity","Autonomy"],c:0,
+   r:"Justice concerns fairness and the equitable distribution of resources, benefits, and burdens — a principle that becomes critical when demand exceeds capacity."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"A nurse repeatedly knows the ethically right action but is constrained by the organization from taking it, causing ongoing anguish. This is:",
+   o:["Moral distress","Compassion satisfaction","An ethical dilemma","Burnout, by definition"],c:0,
+   r:"Moral distress occurs when a clinician knows the ethically appropriate action but is prevented from acting on it. Left unaddressed it accumulates as moral residue and drives disengagement and turnover."},
+  {d:"hcd",s:"Ethics & Code of Ethics",q:"According to the ANA (American Nurses Association) Code of Ethics, the nurse's primary commitment is to:",
+   o:["The employing organization","The patient","The physician","The nursing profession"],c:1,
+   r:"Provision 2 of the ANA (American Nurses Association) Code of Ethics states that the nurse's primary commitment is to the patient — whether an individual, family, group, community, or population."},
+
+  // ---- Regulatory & Compliance ----
+  {d:"hcd",s:"Regulatory & Compliance",q:"An uninsured patient presents to the ED (emergency department) in active labor. Which law requires a medical screening exam and stabilization regardless of ability to pay?",
+   o:["HIPAA (Health Insurance Portability and Accountability Act)","EMTALA (Emergency Medical Treatment and Labor Act)","The Stark Law","The False Claims Act"],c:1,
+   r:"EMTALA (Emergency Medical Treatment and Labor Act) requires a medical screening exam and stabilizing treatment — or an appropriate transfer — regardless of insurance status or ability to pay."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"Under HIPAA (Health Insurance Portability and Accountability Act), staff should access only the patient information required to perform their job. This is the principle of:",
+   o:["Minimum necessary","Implied consent","Respondeat superior","Due process"],c:0,
+   r:"The HIPAA minimum necessary standard limits the use, access, and disclosure of protected health information to what is genuinely needed for the task at hand."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"The Joint Commission National Patient Safety Goal on patient identification requires staff to:",
+   o:["Use the room number as one identifier","Use at least two patient identifiers before care or treatment","Confirm identity only for medication administration","Rely on the wristband alone"],c:1,
+   r:"At least two patient identifiers, such as name and date of birth, must be used before administering medications, drawing specimens, or providing treatment. A room number is never an acceptable identifier."},
+  {d:"hcd",s:"Regulatory & Compliance",q:"An effective corporate compliance program most importantly includes:",
+   o:["An anonymous reporting mechanism, education, auditing, and enforcement","Annual financial audits only","A written policy binder alone","Disciplinary action after violations only"],c:0,
+   r:"Effective compliance programs combine written standards, a compliance officer, education, anonymous reporting, auditing and monitoring, enforcement, and prompt corrective action."},
+
+  // ---- Leadership Scope & Systems ----
+  {d:"hcd",s:"Leadership Scope & Systems",q:"A hospital establishes unit practice councils in which staff nurses decide practice and quality issues. This structure is:",
+   o:["Shared governance","Matrix management","Functional nursing","Span of control"],c:0,
+   r:"Shared governance is a professional practice model that distributes decision-making authority to frontline nurses over practice, quality, and professional development — a hallmark of Magnet organizations."},
+  {d:"hcd",s:"Leadership Scope & Systems",q:"Which document defines the competencies and accountabilities specific to the nurse administrator role?",
+   o:["The ANA Nursing Administration Scope and Standards of Practice","The Joint Commission accreditation manual","The state Nurse Practice Act","The HCAHPS survey"],c:0,
+   r:"The ANA (American Nurses Association) Nursing Administration Scope and Standards of Practice articulates the standards of practice and professional performance expected of nurse leaders."},
+  {d:"hcd",s:"Leadership Scope & Systems",q:"A nurse executive testifies before a state legislature on safe staffing legislation. This exercises influence in which sphere?",
+   o:["Workplace","Government and policy","Profession","Community"],c:1,
+   r:"Nurse leaders exert policy influence across four spheres — workplace, profession, community, and government. Legislative testimony is influence in the government and policy sphere."},
+
+  // ---- Emergency & Disaster Preparedness ----
+  {d:"hcd",s:"Emergency & Disaster Preparedness",q:"The four phases of the emergency management cycle are:",
+   o:["Assess, plan, intervene, evaluate","Mitigation, preparedness, response, recovery","Prevent, detect, correct, monitor","Alert, triage, treat, transport"],c:1,
+   r:"Emergency management cycles through mitigation (reduce risk), preparedness (plan and drill), response (activate the plan), and recovery (return to normal operations)."},
+  {d:"hcd",s:"Emergency & Disaster Preparedness",q:"During a mass casualty event the hospital activates a structure with defined command, operations, planning, logistics, and finance roles. This is the:",
+   o:["Hospital Incident Command System (HICS)","Shared governance council","Matrix organization","Rapid response team"],c:0,
+   r:"The Hospital Incident Command System (HICS) provides a standardized, scalable command structure with clearly assigned roles and unity of command during emergencies."},
+  {d:"hcd",s:"Emergency & Disaster Preparedness",q:"In mass casualty triage, the guiding ethic differs from daily practice because resources are directed toward:",
+   o:["The most critically injured first, regardless of survivability","The greatest good for the greatest number of survivors","Patients in order of arrival","Patients with insurance coverage first"],c:1,
+   r:"Disaster triage shifts from an individual-focused ethic to a utilitarian one — achieving the greatest good for the greatest number by prioritizing those most likely to survive with available resources."},
+  {d:"hcd",s:"Emergency & Disaster Preparedness",q:"A nurse executive plans a discussion-based exercise in which leaders talk through their response to a simulated hurricane. This is a:",
+   o:["Tabletop exercise","Full-scale drill","Root cause analysis","Gap analysis"],c:0,
+   r:"A tabletop exercise is a low-cost, discussion-based session used to validate plans, clarify roles, and identify gaps before committing to resource-intensive full-scale drills."},
+
+  // ---- SDOH & Health Equity ----
+  {d:"hcd",s:"SDOH & Health Equity",q:"Housing instability, food insecurity, and lack of transportation are examples of:",
+   o:["Nurse-sensitive indicators","Social determinants of health","Core measures","Never events"],c:1,
+   r:"Social determinants of health are the conditions in which people are born, live, work, and age — economic stability, education, health care access, neighborhood and environment, and social context."},
+  {d:"hcd",s:"SDOH & Health Equity",q:"What best distinguishes health equity from health equality?",
+   o:["They are identical concepts","Equity gives everyone identical resources; equality tailors them","Equity allocates resources according to need so all have a fair opportunity to be healthy","Equity applies only to insured patients"],c:2,
+   r:"Equality distributes the same resources to everyone; equity distributes according to need, removing barriers so that everyone has a fair and just opportunity to attain their highest level of health."},
+  {d:"hcd",s:"SDOH & Health Equity",q:"Data show that one racial group in the service area has markedly higher maternal mortality. This preventable, unjust difference is best termed a:",
+   o:["Health disparity","Sentinel event","Never event","Statistical outlier"],c:0,
+   r:"A health disparity is a preventable difference in health outcomes closely linked with social, economic, or environmental disadvantage — a signal for targeted, equity-focused intervention."},
+  {d:"hcd",s:"SDOH & Health Equity",q:"After screening reveals that many patients lack transportation to follow-up visits, the most effective executive response is to:",
+   o:["Document the barrier in the chart only","Partner with community organizations and build closed-loop referral pathways","Discharge patients with written instructions alone","Reduce the frequency of follow-up appointments"],c:1,
+   r:"Screening creates value only when paired with action; community partnerships and closed-loop referrals actually connect patients to resources that address the underlying social need."},
+
+  // ---- Person-Centered Care ----
+  {d:"hcd",s:"Person-Centered Care",q:"A nurse manager visits each patient daily to ask about care, staff responsiveness, and unmet needs. The PRIMARY purpose of purposeful leader rounding is to:",
+   o:["Monitor and discipline staff","Identify and resolve concerns in real time and capture staff recognition","Complete a regulatory checklist","Reduce the need for staffing"],c:1,
+   r:"Purposeful leader rounding surfaces problems while they can still be fixed, validates care quality, harvests recognition for staff, and reliably improves patient experience scores."},
+  {d:"hcd",s:"Person-Centered Care",q:"An organization creates a standing council of former patients and family members to advise on facility design and policy. This is a:",
+   o:["Patient and family advisory council","Ethics committee","Shared governance council","Root cause analysis team"],c:0,
+   r:"A patient and family advisory council embeds the patient voice directly into organizational design, policy, and improvement work — a cornerstone of person-centered care."},
+  {d:"hcd",s:"Person-Centered Care",q:"A clinician presents treatment options with risks and benefits, then elicits the patient's values and goals before deciding together. This is:",
+   o:["Informed refusal","Shared decision making","Implied consent","Paternalism"],c:1,
+   r:"Shared decision making pairs the clinician's evidence and expertise with the patient's values and preferences, producing decisions aligned with what matters most to the patient."},
+
+  // ---- Care Delivery Evaluation ----
+  {d:"hcd",s:"Care Delivery Evaluation",q:"Which set of measures are ALL considered nurse-sensitive indicators?",
+   o:["Patient falls, hospital-acquired pressure injuries, and CLABSI (central line-associated bloodstream infection)","Door-to-balloon time, surgical volume, and bed count","Payor mix, days in accounts receivable, and operating margin","Physician turnover, credentialing time, and OR delays"],c:0,
+   r:"Nurse-sensitive indicators reflect outcomes affected by the quantity and quality of nursing care — falls with injury, pressure injuries, CLABSI, CAUTI, and RN satisfaction — and are benchmarked through NDNQI (National Database of Nursing Quality Indicators)."},
+  {d:"hcd",s:"Care Delivery Evaluation",q:"A nurse executive compares her unit's fall rate against top-performing peer hospitals to set improvement targets. This process is:",
+   o:["Benchmarking","Root cause analysis","Variance analysis","Capitation"],c:0,
+   r:"Benchmarking compares performance against internal history, peer organizations, or best-in-class standards in order to identify gaps and set evidence-informed targets."},
+  {d:"hcd",s:"Care Delivery Evaluation",q:"HCAHPS (Hospital Consumer Assessment of Healthcare Providers and Systems) results show low scores for communication with nurses. The most appropriate FIRST executive step is to:",
+   o:["Post the scores and require improvement","Analyze the data with frontline nurses to identify root causes and design interventions","Replace the nurse manager","Discount the survey as unreliable"],c:1,
+   r:"Engaging frontline nurses in analyzing their own data builds ownership and surfaces the true drivers — hourly rounding, bedside shift report, communication training — before interventions are selected."},
+  {d:"hcd",s:"Care Delivery Evaluation",q:"A nurse coordinates a complex patient's handoff from hospital to skilled nursing facility, reconciling medications and arranging follow-up. This is best described as:",
+   o:["Transitional care coordination","Utilization review","Case mix indexing","Functional nursing"],c:0,
+   r:"Care coordination across transitions — medication reconciliation, warm handoffs, and timely follow-up — is the primary lever for reducing avoidable readmissions and post-discharge harm."},
+  {d:"hcd",s:"Care Delivery Evaluation",q:"Standardized, evidence-based process measures such as timely antibiotic administration in sepsis are known as:",
+   o:["Core measures","Nurse-sensitive indicators","Never events","Sentinel events"],c:0,
+   r:"Core measures are standardized, evidence-based process metrics reported to CMS (Centers for Medicare & Medicaid Services) and The Joint Commission, and are publicly reported to support accountability and comparison."},
+
+  // ---- Technology Innovation ----
+  {d:"hcd",s:"Technology Innovation",q:"A rural clinic connects patients to a specialist at the academic medical center by live video. The PRIMARY benefit of telehealth here is:",
+   o:["Eliminating documentation requirements","Improving access to specialty care across geographic distance","Removing the need for state licensure","Avoiding privacy regulations"],c:1,
+   r:"Telehealth extends access to care across geographic distance. Licensure, privacy under HIPAA, and documentation requirements all continue to apply."},
+  {d:"hcd",s:"Technology Innovation",q:"An EHR (electronic health record) algorithm flags patients whose vital-sign trends predict deterioration hours before decline. This application is:",
+   o:["Predictive analytics","Barcode medication administration","Retrospective chart audit","Computerized provider order entry"],c:0,
+   r:"Predictive analytics applies algorithms to clinical data to anticipate risk, enabling earlier rapid-response activation and intervention before a patient decompensates."},
+  {d:"hcd",s:"Technology Innovation",q:"A health system deploys experienced remote RNs by in-room camera to handle admissions, discharge teaching, and dual verification. This virtual nursing model primarily aims to:",
+   o:["Replace bedside nursing staff","Offload documentation and education so bedside nurses can focus on hands-on care","Reduce patient contact overall","Eliminate the need for orientation"],c:1,
+   r:"Virtual nursing supplements rather than replaces bedside staff, shifting admission, discharge, education, and verification tasks to remote experienced nurses to relieve workload and retain expertise."},
+  {d:"hcd",s:"Technology Innovation",q:"When implementing barcode medication administration, nurses begin scanning their own badge and a spare wristband to save time. The nurse executive should recognize this as:",
+   o:["An acceptable efficiency adaptation","A workaround signaling that the technology disrupts workflow and must be redesigned with staff","Grounds for immediate termination","An IT problem outside nursing's scope"],c:1,
+   r:"Workarounds are a safety signal, not merely a discipline issue: they indicate the technology conflicts with real workflow. The leader engages frontline nurses to redesign the process and remove the barrier driving the shortcut."}
+];
+
+
+/* =====================================================================
+   STATE + LOGIC
+   ===================================================================== */
+let mode = 'blueprint';
+let domain = 'all';
+let fIndex = 0;
+let flipped = false;
+let fDeck = [];
+let qDeck = [];
+let qIndex = 0;
+let qAnswered = false;
+let qSelected = null;
+let openDomain = null;             // which blueprint card is expanded
+let briefOpen = false;             // whether the study brief is shown in the open domain
+let stats = {seen:0, correct:0, attempts:0, streak:0};
+
+const view = document.getElementById('view');
+
+function domainLabel(id){const d=DOMAINS.find(x=>x[0]===id);return d?d[3]:'—';}
+function domainShort(id){const d=DOMAINS.find(x=>x[0]===id);return d?d[1]:'—';}
+function domainPct(id){const d=DOMAINS.find(x=>x[0]===id);return d?d[2]:0;}
+function itemCount(id){
+  const c = CARDS.filter(x=>id==='all'||x.d===id).length;
+  const q = QUESTIONS.filter(x=>id==='all'||x.d===id).length;
+  return {c,q,total:c+q};
+}
+
+function buildFilters(){
+  const f = document.getElementById('filters');
+  if(mode==='blueprint'){ f.innerHTML=''; f.style.display='none'; return; }
+  f.style.display='flex';
+  f.innerHTML = '<span class="flabel">Domain</span>' + DOMAINS.map(([id,label,pct])=>{
+    const wt = id==='all' ? '' : `<span class="wt">${pct}%</span>`;
+    return `<button class="chip ${id===domain?'on':''}" onclick="setDomain('${id}')">${label}${wt}</button>`;
+  }).join('');
+}
+
+function setDomain(id){
+  domain = id;
+  fIndex = 0; flipped = false;
+  qIndex = 0; qAnswered = false; qSelected = null;
+  buildFilters();
+  rebuildDecks();
+  render();
+}
+
+function setMode(m){
+  mode = m;
+  document.getElementById('mBlue').classList.toggle('on', m==='blueprint');
+  document.getElementById('mFlash').classList.toggle('on', m==='flash');
+  document.getElementById('mQuiz').classList.toggle('on', m==='quiz');
+  buildFilters();
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+/* Some option sets are naturally sequenced (Level I–IV, R1–R4, Tuckman's
+   stages, pure numbers) and should stay in their published order. */
+function keepsOrder(q){
+  const low = q.o.map(o=>o.toLowerCase().trim());
+  if(q.o.every(o=>/^(level\s+[ivx]+|[rs][1-4]\b|stage\s|phase\s)/i.test(o))) return true;
+  if(q.o.every(o=>/^[\d.,\s$%]+$/.test(o))) return true;
+  const tuckman = ['forming','storming','norming','performing'];
+  if(tuckman.every(s=>low.includes(s))) return true;
+  return false;
+}
+
+/* Randomize which letter holds the correct answer, so position never becomes
+   a tell on repeat runs. Remaps the correct-answer index accordingly. */
+function shuffleOptions(q){
+  if(keepsOrder(q)) return q;
+  const order = shuffle(q.o.map((_,i)=>i));
+  return Object.assign({}, q, {o: order.map(i=>q.o[i]), c: order.indexOf(q.c)});
+}
+
+function rebuildDecks(){
+  fDeck = CARDS.filter(c=>domain==='all'||c.d===domain);
+  qDeck = shuffle(QUESTIONS.filter(q=>domain==='all'||q.d===domain)).map(shuffleOptions);
+}
+
+function updateVitals(){
+  document.getElementById('vSeen').textContent = stats.seen;
+  document.getElementById('vAcc').textContent = stats.attempts ? Math.round(100*stats.correct/stats.attempts)+'%' : '—';
+  document.getElementById('vStreak').textContent = stats.streak;
+}
+
+/* ---------- BLUEPRINT RENDER ---------- */
+function renderBlueprint(){
+  const cats = [['hr','I'],['qs','II'],['bm','III'],['hcd','IV']];
+  const maxPct = Math.max(...cats.map(([id])=>domainPct(id)));
+  const cards = cats.map(([id,roman])=>{
+    const o = OUTLINE[id];
+    const cnt = itemCount(id);
+    const open = openDomain===id;
+    const knowledge = o.Knowledge.map(t=>`<li>${t}</li>`).join('');
+    const skill = o.Skill.map(t=>`<li>${t}</li>`).join('');
+    return `
+      <div class="bp-domain">
+        <button class="bp-head" onclick="toggleDomain('${id}')" aria-expanded="${open}">
+          <span class="bp-num">${roman}</span>
+          <span class="bp-headmain">
+            <h3>${domainLabel(id)}</h3>
+            <span class="bp-bar"><i data-w="${Math.round(100*domainPct(id)/maxPct)}"></i></span>
+          </span>
+          <span class="bp-meta"><b>${domainPct(id)}%</b><span>${cnt.total} items</span></span>
+        </button>
+        <div class="bp-body ${open?'open':''}">
+          <div class="bp-colhead">Knowledge</div>
+          <ul class="bp-list">${knowledge}</ul>
+          <div class="bp-colhead">Skill</div>
+          <ul class="bp-list">${skill}</ul>
+          <div class="bp-colhead bp-studyhead">Study Brief</div>
+          <div class="bp-brief ${open && briefOpen ? 'open':''}">${STUDY[id]}</div>
+          <div class="bp-actions">
+            <button class="bp-briefbtn" onclick="toggleBrief(event)">${briefOpen?'Hide study brief':'Read study brief'}</button>
+            <button class="bp-drill" onclick="drill('${id}')">Drill ${domainShort(id)} →</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  view.innerHTML = `
+    <div class="bp-intro">
+      <span class="ey">Test Content Outline</span>
+      <h2>Four domains. One blueprint.</h2>
+      <p>The NE-BC (Nurse Executive–Board Certified) exam scores 125 questions across four weighted domains. The bars below show how heavily each domain counts toward your score — start where the weight (and your gaps) are greatest. Tap a domain to see its knowledge and skill areas, then drill it as flashcards or practice questions.</p>
+      <div class="effd">150 questions total · 125 scored · 25 unscored pretest · effective Oct 15, 2025</div>
+    </div>
+    <div class="bp-grid">${cards}</div>
+    <div class="bp-foot">
+      Weighting reflects the official outline: <b>Human Resource 32%</b> · <b>Quality &amp; Safety 17%</b> · <b>Business 16%</b> · <b>Health Care Delivery 35%</b>.<br>
+      Health Care Delivery and Human Resource Management together are two-thirds of the exam.<br>
+      The practice bank now mirrors the scored exam exactly — <b>125 questions</b> split <b>40 / 21 / 20 / 44</b> across the four domains.
+    </div>`;
+
+  // animate the weight bars after paint
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('.bp-bar i').forEach(el=>{ el.style.width = el.dataset.w + '%'; });
+  });
+}
+
+function toggleDomain(id){ openDomain = (openDomain===id ? null : id); briefOpen = false; renderBlueprint(); }
+function toggleBrief(e){ if(e) e.stopPropagation(); briefOpen = !briefOpen; renderBlueprint(); }
+function drill(id){ domain = id; setMode('flash'); fIndex=0; flipped=false; rebuildDecks(); buildFilters(); render(); }
+
+/* ---------- FLASHCARD RENDER ---------- */
+function renderFlash(){
+  if(!fDeck.length){view.innerHTML = emptyPanel('No cards in this domain.'); return;}
+  const c = fDeck[fIndex];
+  view.innerHTML = `
+    <div class="stage">
+      <div class="progressline">
+        <span>Card ${fIndex+1} / ${fDeck.length}</span>
+        <span class="topiclabel">${c.s}</span>
+      </div>
+      <div class="card ${flipped?'flipped':''}" id="theCard" onclick="flip()" role="button" tabindex="0"
+           aria-label="Flash card, press to flip">
+        <div class="card-inner">
+          <div class="face front">
+            <div class="corner"><span>${domainShort(c.d)}</span><span>↻ tap to reveal</span></div>
+            <div class="term">${c.q}</div>
+          </div>
+          <div class="face back">
+            <div class="corner"><span>${c.s}</span><span>↻</span></div>
+            <div class="term">${c.a}</div>
+          </div>
+        </div>
+      </div>
+      <div class="flaghint">Space / Enter flips · ← → to navigate</div>
+      <div class="deck-nav">
+        <button class="navbtn" onclick="prevCard(event)" ${fIndex===0?'disabled':''}>← Prev</button>
+        <button class="navbtn primary" onclick="flip(event)">${flipped?'Show Prompt':'Reveal Answer'}</button>
+        <button class="navbtn" onclick="nextCard(event)" ${fIndex===fDeck.length-1?'disabled':''}>Next →</button>
+        <button class="navbtn ghost" onclick="shuffleDeck(event)">Shuffle</button>
+      </div>
+    </div>`;
+}
+
+function flip(e){ if(e) e.stopPropagation(); flipped=!flipped; if(flipped){stats.seen++; updateVitals();} renderFlash(); }
+function nextCard(e){ if(e) e.stopPropagation(); if(fIndex<fDeck.length-1){fIndex++; flipped=false; renderFlash();} }
+function prevCard(e){ if(e) e.stopPropagation(); if(fIndex>0){fIndex--; flipped=false; renderFlash();} }
+function shuffleDeck(e){ if(e) e.stopPropagation(); fDeck = shuffle(fDeck); fIndex=0; flipped=false; renderFlash(); }
+
+/* ---------- QUIZ RENDER ---------- */
+function renderQuiz(){
+  if(!qDeck.length){view.innerHTML = emptyPanel('No questions in this domain.'); return;}
+  if(qIndex >= qDeck.length){ renderResults(); return; }
+  const q = qDeck[qIndex];
+  const letters = ['A','B','C','D','E'];
+  const opts = q.o.map((o,i)=>{
+    let cls = 'opt';
+    if(qAnswered){
+      cls += ' locked';
+      if(i===q.c) cls+=' correct';
+      else if(i===qSelected) cls+=' wrong';
+      else cls+=' dim';
+    }
+    return `<button class="${cls}" onclick="answer(${i})" ${qAnswered?'disabled':''}>
+      <span class="ltr">${letters[i]}</span>${o}</button>`;
+  }).join('');
+  view.innerHTML = `
+    <div class="stage">
+      <div class="qcard">
+        <div class="qmeta">
+          <span>Question ${qIndex+1} / ${qDeck.length} · ${domainShort(q.d)}</span>
+          <span class="qtopic">${q.s}</span>
+        </div>
+        <div class="qtext">${q.q}</div>
+        <div class="opts">${opts}</div>
+        <div class="rationale ${qAnswered?'show':''}">
+          <div class="rh">${qSelected===q.c?'Correct':'Rationale'}</div>
+          ${q.r}
+        </div>
+      </div>
+      <div class="deck-nav">
+        <button class="navbtn ghost" onclick="restartQuiz()">Restart Set</button>
+        <button class="navbtn primary" onclick="nextQ()" ${qAnswered?'':'disabled'}>
+          ${qIndex===qDeck.length-1?'See Results':'Next Question →'}</button>
+      </div>
+    </div>`;
+}
+
+function answer(i){
+  if(qAnswered) return;
+  qAnswered = true; qSelected = i;
+  const q = qDeck[qIndex];
+  stats.attempts++; stats.seen++;
+  if(i===q.c){ stats.correct++; stats.streak++; }
+  else{ stats.streak = 0; }
+  updateVitals();
+  renderQuiz();
+}
+function nextQ(){ if(!qAnswered) return; qIndex++; qAnswered=false; qSelected=null; renderQuiz(); }
+function restartQuiz(){ qDeck = shuffle(qDeck).map(shuffleOptions); qIndex=0; qAnswered=false; qSelected=null; renderQuiz(); }
+
+function renderResults(){
+  const acc = stats.attempts ? Math.round(100*stats.correct/stats.attempts) : 0;
+  let msg, head;
+  if(acc>=85){head="Board-ready.";msg="Strong command of the material. Keep cycling the domains you score lowest in.";}
+  else if(acc>=70){head="Solid footing.";msg="A passing trajectory. Target the domains where you missed and re-run the set.";}
+  else{head="Keep building.";msg="Review the flashcards for the missed domains, then return to practice questions.";}
+  view.innerHTML = `
+    <div class="stage">
+      <div class="panel">
+        <div class="big">${acc}<small>%</small></div>
+        <h2>${head}</h2>
+        <p>Session accuracy across ${stats.attempts} answered question${stats.attempts===1?'':'s'}. ${msg}</p>
+        <div class="row">
+          <button class="navbtn primary" onclick="restartQuiz()">Run Set Again</button>
+          <button class="navbtn" onclick="setMode('blueprint')">Back to Blueprint</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function emptyPanel(text){
+  return `<div class="stage"><div class="panel">
+    <h2>Nothing here yet</h2><p>${text} Try selecting a different domain above.</p>
+    <div class="row"><button class="navbtn primary" onclick="setDomain('all')">Show All Domains</button></div>
+  </div></div>`;
+}
+
+function render(){
+  if(mode==='blueprint') renderBlueprint();
+  else if(mode==='flash') renderFlash();
+  else renderQuiz();
+}
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown',(e)=>{
+  if(mode!=='flash') return;
+  if(e.code==='Space'||e.code==='Enter'){ e.preventDefault(); flip(); }
+  else if(e.code==='ArrowRight'){ nextCard(); }
+  else if(e.code==='ArrowLeft'){ prevCard(); }
+});
+
+/* ---------- init ---------- */
+buildFilters();
+rebuildDecks();
+updateVitals();
+render();
+</script>
+</body>
+</html>
